@@ -284,29 +284,35 @@
   align-items: center;
 }
 
-/* Current user: Blue bubble, White text */
+/* Current user: RIGHT ALIGNED - Blue bubble, White text */
 .team-msg.mine {
   align-self: flex-end;
-  background: var(--accent-blue);
+  margin-left: auto;
+  background: #2563EB;
   color: #FFFFFF;
   border-bottom-right-radius: 2px;
+  text-align: left;
 }
 
 .team-msg.mine .team-msg-author {
   color: #DBEAFE;
+  justify-content: flex-start;
 }
 
-/* Incoming message: Light Blue / White bubble, Dark Navy text */
+/* Other members: LEFT ALIGNED - Light Blue bubble, Dark Navy text */
 .team-msg.theirs {
   align-self: flex-start;
+  margin-right: auto;
   background: #EFF6FF;
   border: 1px solid #DBEAFE;
   color: #0F172A;
   border-bottom-left-radius: 2px;
+  text-align: left;
 }
 
 .team-msg.theirs .team-msg-author {
-  color: var(--accent-blue);
+  color: #2563EB;
+  justify-content: flex-start;
 }
 
 .chat-input-bar {
