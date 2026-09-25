@@ -273,12 +273,14 @@
   width: 100%;
 }
 
+.message-row.own-message,
 .message-row.own {
-  justify-content: flex-end;
+  justify-content: flex-end !important;
 }
 
+.message-row.other-message,
 .message-row.other {
-  justify-content: flex-start;
+  justify-content: flex-start !important;
 }
 
 .message-bubble {
@@ -291,12 +293,14 @@
 }
 
 /* Current user: RIGHT ALIGNED - Blue bubble, White text */
+.message-row.own-message .message-bubble,
 .message-row.own .message-bubble {
-  background: #2563EB;
-  color: #FFFFFF;
+  background: #2563EB !important;
+  color: #FFFFFF !important;
   border-bottom-right-radius: 2px;
 }
 
+.message-row.own-message .message-author,
 .message-row.own .message-author {
   font-size: 0.74rem;
   font-weight: 700;
@@ -304,17 +308,19 @@
   display: flex;
   gap: 6px;
   align-items: center;
-  color: #DBEAFE;
+  color: #DBEAFE !important;
 }
 
 /* Other members: LEFT ALIGNED - Light Blue bubble, Dark Navy text */
+.message-row.other-message .message-bubble,
 .message-row.other .message-bubble {
-  background: #EFF6FF;
-  border: 1px solid #DBEAFE;
-  color: #0F172A;
+  background: #EFF6FF !important;
+  border: 1px solid #DBEAFE !important;
+  color: #0F172A !important;
   border-bottom-left-radius: 2px;
 }
 
+.message-row.other-message .message-author,
 .message-row.other .message-author {
   font-size: 0.74rem;
   font-weight: 700;
@@ -322,7 +328,7 @@
   display: flex;
   gap: 6px;
   align-items: center;
-  color: #2563EB;
+  color: #2563EB !important;
 }
 
 /* Backward compatibility aliases */

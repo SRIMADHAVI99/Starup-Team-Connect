@@ -30,6 +30,52 @@ const getApiBaseUrl = () => {
 };
 const API_BASE_URL = getApiBaseUrl();
 
+const PAGE_URL_MAP = {
+  'user-dashboard': '/user-dashboard',
+  'founder-dashboard': '/founder-dashboard',
+  'startups': '/startups',
+  'my-applications': '/applications',
+  'applications': '/applications',
+  'saved-startups': '/saved',
+  'team': '/my-team',
+  'user-profile': '/profile',
+  'founder-profile': '/profile',
+  'create-startup': '/create-startup',
+  'startup-details': '/startup-details'
+};
+
+const getPageFromPath = (path, role) => {
+  if (!path) return null;
+  const cleanPath = path.toLowerCase().replace(/\/+$/, '');
+  if (cleanPath === '/my-team' || cleanPath === '/team') return 'team';
+  if (cleanPath === '/profile') return role === 'founder' ? 'founder-profile' : 'user-profile';
+  if (cleanPath === '/applications' || cleanPath === '/my-applications') return role === 'founder' ? 'applications' : 'my-applications';
+  if (cleanPath === '/saved' || cleanPath === '/saved-startups') return 'saved-startups';
+  if (cleanPath === '/startups') return 'startups';
+  if (cleanPath === '/create-startup') return 'create-startup';
+  if (cleanPath === '/founder-dashboard') return 'founder-dashboard';
+  if (cleanPath === '/user-dashboard' || cleanPath === '/dashboard') return 'user-dashboard';
+  return null;
+};
+
+const getValidPageForRole = (page, role) => {
+  if (!page || page === 'login' || page === 'register') return null;
+
+  if (role === 'founder') {
+    if (page === 'user-dashboard') return 'founder-dashboard';
+    if (page === 'my-applications') return 'applications';
+    if (page === 'user-profile') return 'founder-profile';
+    const validFounderPages = ['founder-dashboard', 'create-startup', 'applications', 'team', 'founder-profile', 'startup-details'];
+    return validFounderPages.includes(page) ? page : 'founder-dashboard';
+  } else {
+    if (page === 'founder-dashboard') return 'user-dashboard';
+    if (page === 'applications') return 'my-applications';
+    if (page === 'founder-profile') return 'user-profile';
+    const validUserPages = ['user-dashboard', 'startups', 'my-applications', 'saved-startups', 'team', 'user-profile', 'startup-details'];
+    return validUserPages.includes(page) ? page : 'user-dashboard';
+  }
+};
+
 export default function App() {
   // Authentication State
   const [currentUser, setCurrentUser] = useState(() => {
@@ -43,22 +89,47 @@ export default function App() {
 
   // Navigation State with Page Refresh Persistence (Requirement 1)
   const [currentPage, setCurrentPage] = useState(() => {
-    const savedUser = localStorage.getItem('stc_user');
-    if (!savedUser) return 'login';
-    const savedPage = localStorage.getItem('stc_page');
-    if (savedPage && savedPage !== 'login' && savedPage !== 'register') {
-      return savedPage;
+    const savedUserStr = localStorage.getItem('stc_user');
+    if (!savedUserStr) return 'login';
+
+    let savedUser = null;
+    try {
+      savedUser = JSON.parse(savedUserStr);
+    } catch (e) {
+      return 'login';
     }
-    const role = localStorage.getItem('stc_role') || 'user';
-    return role === 'founder' ? 'founder-dashboard' : 'user-dashboard';
+
+    if (!savedUser || !savedUser.id) return 'login';
+
+    const role = localStorage.getItem('stc_role') || savedUser.role || 'user';
+    const savedUserId = localStorage.getItem('stc_page_user_id');
+
+    // 1. Check if stc_page belongs to current user
+    let candidatePage = null;
+    if (savedUserId && String(savedUserId) === String(savedUser.id)) {
+      candidatePage = localStorage.getItem('stc_page');
+    }
+
+    // 2. Check URL pathname if stc_page is missing or generic
+    const pathPage = getPageFromPath(window.location.pathname, role);
+
+    const defaultPage = role === 'founder' ? 'founder-dashboard' : 'user-dashboard';
+    const targetPage = candidatePage || pathPage || defaultPage;
+    return getValidPageForRole(targetPage, role) || defaultPage;
   });
 
   // Persist current active tab/page on changes
   useEffect(() => {
-    if (currentUser && currentPage && currentPage !== 'login' && currentPage !== 'register') {
+    if (currentUser?.id && currentPage && currentPage !== 'login' && currentPage !== 'register') {
       localStorage.setItem('stc_page', currentPage);
+      localStorage.setItem('stc_page_user_id', String(currentUser.id));
+
+      const targetUrl = PAGE_URL_MAP[currentPage] || (currentRole === 'founder' ? '/founder-dashboard' : '/user-dashboard');
+      if (window.location.pathname !== targetUrl) {
+        window.history.replaceState(null, '', targetUrl);
+      }
     }
-  }, [currentPage, currentUser]);
+  }, [currentPage, currentUser?.id, currentRole]);
 
   // Theme State (Light / Dark mode persistence)
   const [theme, setTheme] = useState(() => {
@@ -187,9 +258,19 @@ export default function App() {
     setCurrentRole(role);
     localStorage.setItem('stc_user', JSON.stringify(userData));
     localStorage.setItem('stc_role', role);
+
+    const savedUserId = localStorage.getItem('stc_page_user_id');
+    let targetPage = null;
+    if (savedUserId && String(savedUserId) === String(userData.id)) {
+      targetPage = localStorage.getItem('stc_page');
+    }
+
     const defaultPage = role === 'founder' ? 'founder-dashboard' : 'user-dashboard';
-    localStorage.setItem('stc_page', defaultPage);
-    setCurrentPage(defaultPage);
+    const validPage = targetPage ? (getValidPageForRole(targetPage, role) || defaultPage) : defaultPage;
+
+    localStorage.setItem('stc_page', validPage);
+    localStorage.setItem('stc_page_user_id', String(userData.id));
+    setCurrentPage(validPage);
   };
 
   const handleLogout = () => {
@@ -197,8 +278,10 @@ export default function App() {
     localStorage.removeItem('stc_user');
     localStorage.removeItem('stc_role');
     localStorage.removeItem('stc_page');
+    localStorage.removeItem('stc_page_user_id');
     setSavedStartups([]);
     setCurrentPage('login');
+    window.history.replaceState(null, '', '/');
   };
 
   const handleSwitchToRegister = (role) => {

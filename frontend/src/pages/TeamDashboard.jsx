@@ -215,13 +215,13 @@ export default function TeamDashboard({
               </div>
             ) : (
               messages.map((msg, idx) => {
-                // Determine ownership ONLY using the logged-in user's ID
+                // Determine ownership ONLY using numeric user IDs
                 const isOwnMessage = Boolean(
-                  currentUser?.id && msg.senderId && Number(msg.senderId) === Number(currentUser.id)
+                  currentUser?.id != null && msg?.senderId != null && Number(msg.senderId) === Number(currentUser.id)
                 );
 
                 return (
-                  <div key={msg.id || `msg-${idx}`} className={`message-row ${isOwnMessage ? 'own' : 'other'}`}>
+                  <div key={msg.id || `msg-${idx}`} className={`message-row ${isOwnMessage ? 'own-message own' : 'other-message other'}`}>
                     <div className="message-bubble">
                       <div className="message-author">
                         {msg.senderName} &bull; <span style={{ opacity: 0.75, fontSize: '0.7rem' }}>{msg.timestamp || (msg.sentAt ? new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now')}</span>
