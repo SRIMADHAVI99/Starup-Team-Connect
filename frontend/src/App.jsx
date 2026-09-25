@@ -22,7 +22,13 @@ import TeamDashboard from './pages/TeamDashboard';
 import UserProfile from './pages/UserProfile';
 import FounderProfile from './pages/FounderProfile';
 
-const API_BASE_URL = `http://${window.location.hostname || 'localhost'}:8080`;
+const getApiBaseUrl = () => {
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL;
+  }
+  return 'http://localhost:8080';
+};
+const API_BASE_URL = getApiBaseUrl();
 
 export default function App() {
   // Authentication State
