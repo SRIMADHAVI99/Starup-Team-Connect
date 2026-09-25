@@ -41,14 +41,26 @@ export default function App() {
     return localStorage.getItem('stc_role') || 'user'; // 'user' | 'founder'
   });
 
-  // Navigation State
+  // Navigation State with Page Refresh Persistence (Requirement 1)
   const [currentPage, setCurrentPage] = useState(() => {
-    const saved = localStorage.getItem('stc_user');
+    const savedUser = localStorage.getItem('stc_user');
+    if (!savedUser) return 'login';
+    const savedPage = localStorage.getItem('stc_page');
+    if (savedPage && savedPage !== 'login' && savedPage !== 'register') {
+      return savedPage;
+    }
     const role = localStorage.getItem('stc_role') || 'user';
-    return saved ? (role === 'founder' ? 'founder-dashboard' : 'user-dashboard') : 'login';
+    return role === 'founder' ? 'founder-dashboard' : 'user-dashboard';
   });
 
-  // Theme State (Light / Dark mode persistence - Requirement 3 & 4)
+  // Persist current active tab/page on changes
+  useEffect(() => {
+    if (currentUser && currentPage && currentPage !== 'login' && currentPage !== 'register') {
+      localStorage.setItem('stc_page', currentPage);
+    }
+  }, [currentPage, currentUser]);
+
+  // Theme State (Light / Dark mode persistence)
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('stc_theme') || 'light';
   });
@@ -175,13 +187,16 @@ export default function App() {
     setCurrentRole(role);
     localStorage.setItem('stc_user', JSON.stringify(userData));
     localStorage.setItem('stc_role', role);
-    setCurrentPage(role === 'founder' ? 'founder-dashboard' : 'user-dashboard');
+    const defaultPage = role === 'founder' ? 'founder-dashboard' : 'user-dashboard';
+    localStorage.setItem('stc_page', defaultPage);
+    setCurrentPage(defaultPage);
   };
 
   const handleLogout = () => {
     setCurrentUser(null);
     localStorage.removeItem('stc_user');
     localStorage.removeItem('stc_role');
+    localStorage.removeItem('stc_page');
     setSavedStartups([]);
     setCurrentPage('login');
   };

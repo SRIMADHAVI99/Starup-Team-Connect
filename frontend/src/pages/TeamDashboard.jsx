@@ -25,38 +25,44 @@ export default function TeamDashboard({
     }
   }, [team?.messages]);
 
-  // Polling loop for active team messages every 3 seconds
-  useEffect(() => {
-    if (!team?.id) return;
+  const teamId = team?.id;
 
-    const fetchLatestMessages = async () => {
-      try {
-        const res = await fetch(`${apiBaseUrl}/api/teams/${team.id}/messages`);
-        if (res.ok) {
-          const freshMsgs = await res.json();
-          if (Array.isArray(freshMsgs)) {
-            setMessages(prev => {
-              if (prev.length === freshMsgs.length && 
-                  prev.length > 0 && 
-                  prev[prev.length - 1].id === freshMsgs[freshMsgs.length - 1].id) {
-                return prev;
-              }
-              if (onUpdateTeamMessages) {
-                onUpdateTeamMessages(freshMsgs);
-              }
-              return freshMsgs;
-            });
-          }
+  // Reliable chat polling & synchronization (Requirement 2 & 5)
+  const fetchLatestMessages = React.useCallback(async () => {
+    if (!teamId) return;
+    try {
+      const res = await fetch(`${apiBaseUrl}/api/teams/${teamId}/messages`);
+      if (res.ok) {
+        const freshMsgs = await res.json();
+        if (Array.isArray(freshMsgs)) {
+          setMessages(prev => {
+            const prevStr = JSON.stringify(prev);
+            const freshStr = JSON.stringify(freshMsgs);
+            if (prevStr === freshStr) {
+              return prev;
+            }
+            if (onUpdateTeamMessages) {
+              onUpdateTeamMessages(freshMsgs);
+            }
+            return freshMsgs;
+          });
         }
-      } catch (err) {
-        // Silent poll warning
       }
-    };
+    } catch (err) {
+      // Keep previous messages visible on network/API failure (Requirement 5)
+      console.warn('Team chat poll error (retrying on next cycle):', err);
+    }
+  }, [teamId, apiBaseUrl, onUpdateTeamMessages]);
+
+  // Polling loop every 3 seconds for active team
+  useEffect(() => {
+    if (!teamId) return;
 
     fetchLatestMessages();
+
     const interval = setInterval(fetchLatestMessages, 3000);
     return () => clearInterval(interval);
-  }, [team?.id, apiBaseUrl, onUpdateTeamMessages]);
+  }, [teamId, fetchLatestMessages]);
 
   // Auto-scroll chat to bottom when messages update
   useEffect(() => {
@@ -102,6 +108,7 @@ export default function TeamDashboard({
     const sent = await onSendMessage(chatText.trim());
     if (sent) {
       setChatText('');
+      fetchLatestMessages();
     }
   };
 
