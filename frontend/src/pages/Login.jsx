@@ -45,17 +45,8 @@ export default function Login({ onLoginSuccess, onSwitchToRegister, apiBaseUrl }
         setErrorMsg(errorText || 'Invalid email or password.');
       }
     } catch (err) {
-      // Fallback for immediate frontend testing if backend server is still starting
-      console.warn('Backend not reached, using prototype demo session:', err);
-      // Demo fallback user
-      const demoUser = {
-        id: 1,
-        name: role === 'user' ? 'Rahul Sharma' : 'Ananya Gupta',
-        email: email,
-        skills: role === 'user' ? 'Java, SQL, HTML, CSS' : '',
-        bio: role === 'user' ? '3rd-year CSE student interested in startups' : 'Tech Founder & Innovator'
-      };
-      onLoginSuccess(demoUser, role);
+      console.error('Login connection error:', err);
+      setErrorMsg('Unable to connect to the server. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -89,7 +80,7 @@ export default function Login({ onLoginSuccess, onSwitchToRegister, apiBaseUrl }
               id="email-input"
               type="email"
               className="form-input"
-              placeholder="e.g. rahul@example.com"
+              placeholder="Enter your email address"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required

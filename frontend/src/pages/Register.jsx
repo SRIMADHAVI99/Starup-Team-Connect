@@ -16,9 +16,10 @@ export default function Register({ initialRole = 'user', onRegisterSuccess, onSw
   const [bio, setBio] = useState('');
   
   // User specific
+  // User specific
   const [skills, setSkills] = useState('');
-  const [experience, setExperience] = useState('Beginner');
-  const [education, setEducation] = useState('B.Tech CSE');
+  const [experience, setExperience] = useState('');
+  const [education, setEducation] = useState('');
   const [portfolioLink, setPortfolioLink] = useState('');
 
   // Founder specific
@@ -47,7 +48,7 @@ export default function Register({ initialRole = 'user', onRegisterSuccess, onSw
       phone,
       bio,
       skills,
-      experience,
+      experience: experience || 'Beginner',
       education,
       portfolioLink
     } : {
@@ -82,11 +83,8 @@ export default function Register({ initialRole = 'user', onRegisterSuccess, onSw
         setErrorMsg(errText || 'Registration failed. Please try again.');
       }
     } catch (err) {
-      console.warn('Backend not reached, using prototype session fallback:', err);
-      setSuccessMsg('Account registered (prototype mode)!');
-      setTimeout(() => {
-        onRegisterSuccess({ id: Date.now(), ...payload }, role);
-      }, 700);
+      console.error('Registration connection error:', err);
+      setErrorMsg('Unable to connect to the server. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -117,7 +115,7 @@ export default function Register({ initialRole = 'user', onRegisterSuccess, onSw
             <input 
               type="text" 
               className="form-input" 
-              placeholder={role === 'user' ? 'Rahul Sharma' : 'Ananya Gupta'}
+              placeholder="Enter your full name"
               value={name} 
               onChange={(e) => setName(e.target.value)} 
               required 
@@ -130,7 +128,7 @@ export default function Register({ initialRole = 'user', onRegisterSuccess, onSw
               <input 
                 type="email" 
                 className="form-input" 
-                placeholder="name@example.com"
+                placeholder="Enter your email address"
                 value={email} 
                 onChange={(e) => setEmail(e.target.value)} 
                 required 
@@ -157,7 +155,7 @@ export default function Register({ initialRole = 'user', onRegisterSuccess, onSw
                 <input 
                   type="text" 
                   className="form-input" 
-                  placeholder="Java, SQL, HTML, CSS, React"
+                  placeholder="e.g. Java, SQL, HTML, CSS"
                   value={skills} 
                   onChange={(e) => setSkills(e.target.value)} 
                   required 
@@ -173,7 +171,8 @@ export default function Register({ initialRole = 'user', onRegisterSuccess, onSw
                     value={experience} 
                     onChange={(e) => setExperience(e.target.value)}
                   >
-                    <option value="Beginner">Beginner (Student)</option>
+                    <option value="">Select experience level</option>
+                    <option value="Beginner">Beginner (Student / Fresher)</option>
                     <option value="Intermediate">Intermediate (1-2 Projects)</option>
                     <option value="Experienced">Experienced (Advanced)</option>
                   </select>
@@ -183,7 +182,7 @@ export default function Register({ initialRole = 'user', onRegisterSuccess, onSw
                   <input 
                     type="text" 
                     className="form-input" 
-                    placeholder="B.Tech CSE, 3rd Year"
+                    placeholder="e.g. B.Tech CSE, 3rd Year"
                     value={education} 
                     onChange={(e) => setEducation(e.target.value)} 
                   />

@@ -239,43 +239,54 @@ export default function App() {
       if (res.ok) {
         const savedApp = await res.json();
         setApplications(prev => [savedApp, ...prev]);
+        showModal('Application Submitted', 'Your application was submitted successfully! Track status in "My Applications".', 'success');
       } else {
-        setApplications(prev => [newApplication, ...prev]);
+        const errText = await res.text();
+        showModal('Application Failed', errText || 'Unable to submit your application. Please try again.', 'error');
       }
     } catch {
-      setApplications(prev => [newApplication, ...prev]);
+      showModal('Application Failed', 'Unable to connect to the server. Please try again.', 'error');
     }
-
-    showModal('Application Submitted', 'Your application was submitted successfully! Track status in "My Applications".', 'success');
   };
 
-  // Save / Bookmark Startup with Backend Persistence
+  // Save / Bookmark Startup with Backend Persistence (Requirement 12)
   const handleSaveStartup = async (startup) => {
     if (!currentUser?.id) return;
     const userKey = `stc_saved_user_${currentUser.id}`;
     const exists = savedStartups.some(s => s.id === startup.id);
-    let updated;
 
     if (exists) {
-      updated = savedStartups.filter(s => s.id !== startup.id);
-      setSavedStartups(updated);
-      localStorage.setItem(userKey, JSON.stringify(updated));
       try {
-        await fetch(`${API_BASE_URL}/api/saved-startups?userId=${currentUser.id}&startupId=${startup.id}`, {
+        const res = await fetch(`${API_BASE_URL}/api/saved-startups?userId=${currentUser.id}&startupId=${startup.id}`, {
           method: 'DELETE'
         });
-      } catch (e) {}
+        if (res.ok) {
+          const updated = savedStartups.filter(s => s.id !== startup.id);
+          setSavedStartups(updated);
+          localStorage.setItem(userKey, JSON.stringify(updated));
+        } else {
+          showModal('Error', 'Unable to remove startup from bookmarks.', 'error');
+        }
+      } catch (e) {
+        showModal('Error', 'Unable to connect to the server.', 'error');
+      }
     } else {
-      updated = [...savedStartups, startup];
-      setSavedStartups(updated);
-      localStorage.setItem(userKey, JSON.stringify(updated));
       try {
-        await fetch(`${API_BASE_URL}/api/saved-startups`, {
+        const res = await fetch(`${API_BASE_URL}/api/saved-startups`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userId: currentUser.id, startupId: startup.id })
         });
-      } catch (e) {}
+        if (res.ok) {
+          const updated = [...savedStartups, startup];
+          setSavedStartups(updated);
+          localStorage.setItem(userKey, JSON.stringify(updated));
+        } else {
+          showModal('Error', 'Unable to save startup opportunity.', 'error');
+        }
+      } catch (e) {
+        showModal('Error', 'Unable to connect to the server.', 'error');
+      }
     }
   };
 
@@ -360,38 +371,37 @@ export default function App() {
     } catch (e) {}
   };
 
-  // Team Chat Post Message
+  // Team Chat Post Message (Requirement 7)
   const handleSendMessage = async (text) => {
-    if (!team) return;
-    const newMsg = {
-      id: Date.now(),
-      senderId: currentUser?.id,
-      senderName: currentUser?.name || (currentRole === 'founder' ? 'Founder' : 'Team Member'),
+    if (!team || !team.id || !currentUser) return false;
+
+    const payload = {
+      senderId: currentUser.id,
+      senderName: currentUser.name || (currentRole === 'founder' ? 'Founder' : 'Contributor'),
       senderRole: currentRole,
-      text: text,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      text: text
     };
 
-    setTeam(prev => ({
-      ...prev,
-      messages: [...(prev?.messages || []), newMsg]
-    }));
-
-    if (team.id) {
-      try {
-        await fetch(`${API_BASE_URL}/api/teams/${team.id}/messages`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            senderId: currentUser?.id || 1,
-            senderName: newMsg.senderName,
-            senderRole: currentRole,
-            text: text
-          })
-        });
-      } catch (err) {
-        console.warn('Message post warning:', err);
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/teams/${team.id}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        const savedMsg = await res.json();
+        setTeam(prev => ({
+          ...prev,
+          messages: [...(prev?.messages || []), savedMsg]
+        }));
+        return true;
+      } else {
+        showModal('Message Failed', 'Unable to send message to team chat.', 'error');
+        return false;
       }
+    } catch (err) {
+      showModal('Message Failed', 'Unable to connect to the server.', 'error');
+      return false;
     }
   };
 
@@ -401,11 +411,11 @@ export default function App() {
   };
 
   const userApplications = applications.filter(
-    a => Number(a.userId) === Number(currentUser?.id) || a.userEmail === currentUser?.email || a.user?.email === currentUser?.email
+    a => currentUser?.id && Number(a.userId || a.user?.id) === Number(currentUser.id)
   );
 
   const founderStartups = startups.filter(
-    s => Number(s.founderId) === Number(currentUser?.id) || s.founderName === currentUser?.name
+    s => currentUser?.id && Number(s.founderId) === Number(currentUser.id)
   );
 
   if (currentPage === 'login') {

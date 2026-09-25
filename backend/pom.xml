@@ -48,6 +48,12 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Standalone Spring Security Crypto for BCrypt Password Hashing -->
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-crypto</artifactId>
+        </dependency>
+
         <!-- Spring Boot Test (for verifying build) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

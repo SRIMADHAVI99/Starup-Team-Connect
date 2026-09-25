@@ -96,11 +96,13 @@ export default function TeamDashboard({
     );
   }
 
-  const handleSend = (e) => {
+  const handleSend = async (e) => {
     e.preventDefault();
     if (!chatText.trim()) return;
-    onSendMessage(chatText.trim());
-    setChatText('');
+    const sent = await onSendMessage(chatText.trim());
+    if (sent) {
+      setChatText('');
+    }
   };
 
   const startupTitle = team.startupTitle || 'Startup Project';
@@ -149,7 +151,7 @@ export default function TeamDashboard({
             {/* Accepted Team Members */}
             {team.members && team.members.length > 0 ? (
               team.members.map((m, idx) => (
-                <div key={idx} className="member-item">
+                <div key={m.id || idx} className="member-item">
                   <div>
                     <div style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '0.92rem' }}>
                       {m.userName || m.name || 'Team Member'}
@@ -205,13 +207,12 @@ export default function TeamDashboard({
                 No messages in this chat channel yet. Send a message to start collaborating!
               </div>
             ) : (
-              messages.map((msg) => {
-                const isMine = (msg.senderId && currentUser?.id && Number(msg.senderId) === Number(currentUser.id)) ||
-                  (msg.senderName && msg.senderName.toLowerCase().includes(currentUser?.name?.toLowerCase() || '')) ||
-                  (currentRole === 'founder' && msg.senderRole === 'founder');
+              messages.map((msg, idx) => {
+                // Ownership strictly determined by user ID (Requirement 8)
+                const isMine = currentUser?.id && Number(msg.senderId) === Number(currentUser.id);
 
                 return (
-                  <div key={msg.id || Math.random()} className={`team-msg ${isMine ? 'mine' : 'theirs'}`}>
+                  <div key={msg.id || `msg-${idx}`} className={`team-msg ${isMine ? 'mine' : 'theirs'}`}>
                     <div className="team-msg-author" style={{ opacity: 0.85 }}>
                       {msg.senderName} &bull; <span style={{ opacity: 0.75, fontSize: '0.7rem' }}>{msg.timestamp || (msg.sentAt ? new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now')}</span>
                     </div>

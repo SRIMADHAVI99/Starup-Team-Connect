@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
  * Stores user bookmarks for startups they are interested in.
  */
 @Entity
-@Table(name = "saved_startups")
+@Table(name = "saved_startups", uniqueConstraints = @UniqueConstraint(columnNames = {"userId", "startupId"}))
 public class SavedStartup {
 
     @Id

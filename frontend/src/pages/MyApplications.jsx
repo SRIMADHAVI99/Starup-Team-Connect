@@ -54,8 +54,8 @@ export default function MyApplications({
               </thead>
               <tbody>
                 {applications.map((app) => {
-                  const startupTitle = app.startupTitle || app.startup?.title || 'Startup Project';
-                  const founderName = app.founderName || app.startup?.founderName || 'Startup Founder';
+                  const startupTitle = app.startupTitle || app.startup?.title || 'Not available';
+                  const founderName = app.founderName || app.startup?.founderName || 'Not available';
                   const targetStartup = app.startup || { id: app.startupId, title: startupTitle, founderName: founderName };
 
                   return (
