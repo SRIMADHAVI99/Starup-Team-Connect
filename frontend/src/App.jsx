@@ -48,8 +48,12 @@ const getPageFromPath = (path, role) => {
   if (!path) return null;
   const cleanPath = path.toLowerCase().replace(/\/+$/, '');
   if (cleanPath === '/my-team' || cleanPath === '/team') return 'team';
-  if (cleanPath === '/profile') return role === 'founder' ? 'founder-profile' : 'user-profile';
-  if (cleanPath === '/applications' || cleanPath === '/my-applications') return role === 'founder' ? 'applications' : 'my-applications';
+  if (cleanPath === '/profile' || cleanPath === '/user-profile' || cleanPath === '/founder-profile') {
+    return role === 'founder' ? 'founder-profile' : 'user-profile';
+  }
+  if (cleanPath === '/applications' || cleanPath === '/my-applications') {
+    return role === 'founder' ? 'applications' : 'my-applications';
+  }
   if (cleanPath === '/saved' || cleanPath === '/saved-startups') return 'saved-startups';
   if (cleanPath === '/startups') return 'startups';
   if (cleanPath === '/create-startup') return 'create-startup';
@@ -102,19 +106,12 @@ export default function App() {
     if (!savedUser || !savedUser.id) return 'login';
 
     const role = localStorage.getItem('stc_role') || savedUser.role || 'user';
-    const savedUserId = localStorage.getItem('stc_page_user_id');
-
-    // 1. Check if stc_page belongs to current user
-    let candidatePage = null;
-    if (savedUserId && String(savedUserId) === String(savedUser.id)) {
-      candidatePage = localStorage.getItem('stc_page');
-    }
-
-    // 2. Check URL pathname if stc_page is missing or generic
+    const savedPage = localStorage.getItem('stc_page');
     const pathPage = getPageFromPath(window.location.pathname, role);
-
     const defaultPage = role === 'founder' ? 'founder-dashboard' : 'user-dashboard';
-    const targetPage = candidatePage || pathPage || defaultPage;
+
+    // Prioritize explicit route path, then stc_page from localStorage, then default role page
+    const targetPage = pathPage || savedPage || defaultPage;
     return getValidPageForRole(targetPage, role) || defaultPage;
   });
 

@@ -215,9 +215,15 @@ export default function TeamDashboard({
               </div>
             ) : (
               messages.map((msg, idx) => {
-                // Determine ownership ONLY using numeric user IDs
+                // Determine ownership by matching user ID + role and sender name to distinguish Founder #1 from User #1
                 const isOwnMessage = Boolean(
-                  currentUser?.id != null && msg?.senderId != null && Number(msg.senderId) === Number(currentUser.id)
+                  currentUser && (
+                    (msg?.senderId != null && currentUser?.id != null &&
+                     Number(msg.senderId) === Number(currentUser.id) &&
+                     (!msg.senderRole || !currentRole || String(msg.senderRole).toLowerCase() === String(currentRole).toLowerCase())) ||
+                    (msg?.senderName && currentUser?.name &&
+                     String(msg.senderName).trim().toLowerCase() === String(currentUser.name).trim().toLowerCase())
+                  )
                 );
 
                 return (
