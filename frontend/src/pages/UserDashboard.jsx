@@ -89,7 +89,7 @@ export default function UserDashboard({
         </div>
         <div className="stat-card">
           <span className="stat-label">Team Status</span>
-          <span className="stat-value" style={{ fontSize: '1.2rem', color: team ? '#15803D' : 'var(--secondary-text)' }}>
+          <span className="stat-value" style={{ fontSize: '1.2rem', color: team ? '#16A34A' : 'var(--text-secondary)' }}>
             {team ? 'Active Member ✓' : 'Looking for Team'}
           </span>
         </div>
@@ -101,7 +101,7 @@ export default function UserDashboard({
           <div className="section-header">
             <div>
               <h2 className="section-title">⚡ Recommended for Your Skills</h2>
-              <p style={{ fontSize: '0.85rem', color: 'var(--secondary-text)' }}>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                 Based on your skills: {userSkills}
               </p>
             </div>

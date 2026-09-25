@@ -1,42 +1,76 @@
 /* ===================================================
-   STARTUP TEAM CONNECT - GLOBAL DESIGN SYSTEM
-   Palette:
-   - Primary Dark: #202642
-   - Secondary Indigo: #555A91
-   - Muted Lavender: #A8A6D5
-   - Soft Blue: #E8ECF7
-   - Off-white Surface: #F7F7F5
-   - Card White: #FFFFFF
-   - Text Primary: #25283A
-   - Secondary Text: #70758A
-   - Muted Accent: #D89A8A
+   STARTUP TEAM CONNECT - BLUE + WHITE DESIGN SYSTEM
    =================================================== */
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
 :root {
-  --primary-dark: #202642;
-  --secondary-indigo: #555A91;
-  --muted-lavender: #A8A6D5;
-  --soft-blue: #E8ECF7;
-  --off-white: #F7F7F5;
-  --card-white: #FFFFFF;
-  --text-primary: #25283A;
-  --secondary-text: #70758A;
-  --muted-accent: #D89A8A;
+  /* Default Light Mode Palette - Blue + White */
+  --bg-primary: #F8FAFC;
+  --bg-card: #FFFFFF;
+  --bg-hover: #EFF6FF;
+  --bg-subtle: #F1F5F9;
+  --border-color: #E2E8F0;
+  --border-focus: #2563EB;
   
-  --border-light: #E2E6EE;
-  --border-focus: #555A91;
-  --bg-gradient: linear-gradient(180deg, #F4F6FB 0%, #E8ECF7 100%);
+  --text-primary: #0F172A;
+  --text-navy: #1E3A8A;
+  --text-secondary: #64748B;
+  --text-muted: #94A3B8;
   
-  --shadow-sm: 0 2px 4px rgba(32, 38, 66, 0.04);
-  --shadow-md: 0 4px 12px rgba(32, 38, 66, 0.06);
-  --shadow-lg: 0 10px 24px rgba(32, 38, 66, 0.08);
+  --accent-blue: #2563EB;
+  --accent-blue-hover: #1D4ED8;
+  --accent-blue-dark: #1E3A8A;
+  --accent-blue-light: #EFF6FF;
+  
+  --badge-bg: #EFF6FF;
+  --badge-text: #2563EB;
+  
+  --nav-bg: #FFFFFF;
+  --nav-border: #E2E8F0;
+  --nav-active-bg: #EFF6FF;
+  --nav-active-text: #2563EB;
+  
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05);
+  --shadow-md: 0 4px 14px rgba(37, 99, 235, 0.08);
 
   --radius-sm: 6px;
-  --radius-md: 10px;
+  --radius-md: 8px;
   --radius-lg: 14px;
   --radius-full: 9999px;
   
-  --font-main: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-main: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+[data-theme="dark"] {
+  /* Dark Mode Palette - Functional Secondary Theme */
+  --bg-primary: #0F172A;
+  --bg-card: #1E293B;
+  --bg-hover: #334155;
+  --bg-subtle: #334155;
+  --border-color: #334155;
+  --border-focus: #3B82F6;
+  
+  --text-primary: #F8FAFC;
+  --text-navy: #93C5FD;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  
+  --accent-blue: #3B82F6;
+  --accent-blue-hover: #2563EB;
+  --accent-blue-dark: #60A5FA;
+  --accent-blue-light: #1E293B;
+  
+  --badge-bg: #1E293B;
+  --badge-text: #60A5FA;
+  
+  --nav-bg: #1E293B;
+  --nav-border: #334155;
+  --nav-active-bg: #334155;
+  --nav-active-text: #60A5FA;
+  
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4);
 }
 
 * {
@@ -47,15 +81,16 @@
 
 body {
   font-family: var(--font-main);
-  background: var(--off-white);
+  background: var(--bg-primary);
   color: var(--text-primary);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 a {
-  color: inherit;
+  color: var(--accent-blue);
   text-decoration: none;
 }
 
@@ -68,7 +103,7 @@ button {
 
 input, textarea, select {
   font-family: inherit;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   color: var(--text-primary);
 }
 
@@ -76,70 +111,63 @@ input, textarea, select {
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 20px;
 }
 
 .page-container {
   min-height: calc(100vh - 72px);
-  padding: 32px 0 64px 0;
+  padding: 28px 0 64px 0;
 }
 
-/* Button Styles */
+/* Button Styles - Blue & White Theme */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   padding: 10px 18px;
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   font-weight: 600;
   border-radius: var(--radius-md);
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .btn-primary {
-  background-color: var(--primary-dark);
+  background-color: var(--accent-blue);
   color: #FFFFFF;
+  border: 1px solid var(--accent-blue);
 }
 
 .btn-primary:hover {
-  background-color: var(--secondary-indigo);
-  box-shadow: var(--shadow-sm);
+  background-color: var(--accent-blue-hover);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+  transform: translateY(-1px);
 }
 
 .btn-secondary {
-  background-color: var(--soft-blue);
-  color: var(--primary-dark);
+  background-color: var(--accent-blue-light);
+  color: var(--accent-blue);
+  border: 1px solid var(--border-color);
 }
 
 .btn-secondary:hover {
-  background-color: #DDE4F3;
+  background-color: #DBEAFE;
 }
 
 .btn-outline {
-  border: 1px solid var(--border-light);
-  background: var(--card-white);
-  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--accent-blue);
 }
 
 .btn-outline:hover {
-  border-color: var(--secondary-indigo);
-  color: var(--secondary-indigo);
-  background: #FAFBFD;
-}
-
-.btn-accent {
-  background-color: var(--muted-accent);
-  color: #FFFFFF;
-}
-
-.btn-accent:hover {
-  opacity: 0.92;
+  border-color: var(--accent-blue);
+  background: var(--accent-blue-light);
 }
 
 .btn-sm {
-  padding: 6px 12px;
-  font-size: 0.85rem;
+  padding: 6px 14px;
+  font-size: 0.82rem;
   border-radius: var(--radius-sm);
 }
 
@@ -147,47 +175,49 @@ input, textarea, select {
   width: 100%;
 }
 
-/* Form Controls */
+/* Form Controls - Clean Blue Focus */
 .form-group {
-  margin-bottom: 18px;
+  margin-bottom: 16px;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
 .form-label {
-  font-size: 0.88rem;
+  font-size: 0.86rem;
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .form-input, .form-textarea, .form-select {
   padding: 11px 14px;
-  border: 1px solid var(--border-light);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
-  background-color: var(--card-white);
+  background-color: var(--bg-card);
+  color: var(--text-primary);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
   outline: none;
 }
 
 .form-input:focus, .form-textarea:focus, .form-select:focus {
-  border-color: var(--secondary-indigo);
-  box-shadow: 0 0 0 3px rgba(85, 90, 145, 0.12);
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
 }
 
 .form-hint {
-  font-size: 0.8rem;
-  color: var(--secondary-text);
+  font-size: 0.78rem;
+  color: var(--text-secondary);
 }
 
-/* Badges */
+/* Badges - Blue & Semantic */
 .badge {
   display: inline-flex;
   align-items: center;
   padding: 4px 10px;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 600;
   border-radius: var(--radius-full);
+  line-height: 1.2;
 }
 
 .badge-pending {
@@ -196,53 +226,69 @@ input, textarea, select {
 }
 
 .badge-accepted {
-  background: #DEF7EC;
-  color: #03543F;
+  background: #DCFCE7;
+  color: #15803D;
+  border: 1px solid #BBF7D0;
 }
 
 .badge-rejected {
-  background: #FDE8E8;
-  color: #9B1C1C;
+  background: #FEE2E2;
+  color: #B91C1C;
 }
 
 .badge-skill {
-  background: var(--soft-blue);
-  color: var(--primary-dark);
+  background: var(--accent-blue-light);
+  color: var(--accent-blue);
+  border: 1px solid #DBEAFE;
 }
 
 .badge-role {
-  background: #F3F4F6;
-  color: var(--secondary-text);
-  border: 1px solid var(--border-light);
-}
-
-.badge-active {
-  background: #E0F2FE;
-  color: #0369A1;
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
 }
 
 /* Status Notifications */
 .alert {
   padding: 12px 16px;
   border-radius: var(--radius-md);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   margin-bottom: 16px;
 }
 
 .alert-success {
-  background: #EDF7EE;
-  color: #1E4620;
-  border: 1px solid #C9E8CA;
+  background: #F0FDF4;
+  color: #166534;
+  border: 1px solid #BBF7D0;
 }
 
 .alert-error {
-  background: #FDF0ED;
-  color: #792A1D;
-  border: 1px solid #F5C6BE;
+  background: #FEF2F2;
+  color: #991B1B;
+  border: 1px solid #FECACA;
 }
 
 .alert-info {
-  background: #EEF2FA;
-  color: #243B6B;
-  border: 1px solid #CFDBF0;
+  background: #EFF6FF;
+  color: #1E40AF;
+  border: 1px solid #BFDBFE;
+}
+
+/* Theme Toggle Button */
+.theme-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  color: var(--accent-blue);
+  font-size: 1.05rem;
+  transition: all 0.2s ease;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--accent-blue-light);
 }

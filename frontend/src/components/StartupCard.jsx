@@ -70,6 +70,12 @@ export default function StartupCard({
 
         <p className="startup-desc">{startup.shortDescription || startup.description}</p>
 
+        {startup.founderName && (
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '10px', fontWeight: 500 }}>
+            Founder: <strong style={{ color: 'var(--text-primary)' }}>{startup.founderName}</strong>
+          </div>
+        )}
+
         {/* Skill Compatibility Pill (Requirement 16) */}
         {compatibility !== null && (
           <div className="compatibility-pill">

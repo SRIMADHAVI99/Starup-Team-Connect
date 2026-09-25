@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import LoginTabs from '../components/LoginTabs';
+import StartupTeamLogo from '../components/StartupTeamLogo';
 
 /**
  * Login Page
@@ -65,9 +66,8 @@ export default function Login({ onLoginSuccess, onSwitchToRegister, apiBaseUrl }
       <div className="auth-card">
         {/* Header */}
         <div className="auth-header">
-          <div className="auth-logo">
-            <div className="auth-logo-badge">ST</div>
-            <h1 className="auth-title">Startup Team Connect</h1>
+          <div className="auth-logo" style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+            <StartupTeamLogo size={42} showText={true} textStyle={{ fontSize: '1.4rem' }} />
           </div>
           <p className="auth-subtitle">Sign in to your account</p>
         </div>

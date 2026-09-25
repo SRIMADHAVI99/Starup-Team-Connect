@@ -6,14 +6,14 @@ import React, { useState } from 'react';
  * skills list (used for skill matching), education, and experience.
  */
 export default function UserProfile({ currentUser, onUpdateProfile, apiBaseUrl }) {
-  const [name, setName] = useState(currentUser?.name || 'Rahul Sharma');
-  const [email] = useState(currentUser?.email || 'rahul@example.com');
-  const [phone, setPhone] = useState(currentUser?.phone || '+91 9876543210');
-  const [skills, setSkills] = useState(currentUser?.skills || 'Java, SQL, HTML, CSS');
+  const [name, setName] = useState(currentUser?.name || '');
+  const [email] = useState(currentUser?.email || '');
+  const [phone, setPhone] = useState(currentUser?.phone || '');
+  const [skills, setSkills] = useState(currentUser?.skills || '');
   const [experience, setExperience] = useState(currentUser?.experience || 'Beginner');
-  const [education, setEducation] = useState(currentUser?.education || 'B.Tech CSE, 3rd Year');
-  const [bio, setBio] = useState(currentUser?.bio || 'CSE student passionate about building scalable web applications and joining innovative startups.');
-  const [portfolioLink, setPortfolioLink] = useState(currentUser?.portfolioLink || 'https://github.com/rahul');
+  const [education, setEducation] = useState(currentUser?.education || '');
+  const [bio, setBio] = useState(currentUser?.bio || '');
+  const [portfolioLink, setPortfolioLink] = useState(currentUser?.portfolioLink || '');
 
   const [savedMsg, setSavedMsg] = useState('');
 
@@ -39,8 +39,8 @@ export default function UserProfile({ currentUser, onUpdateProfile, apiBaseUrl }
       <div className="section-header" style={{ maxWidth: '720px', margin: '0 auto 20px auto' }}>
         <div>
           <h1 className="section-title" style={{ fontSize: '1.6rem' }}>User Profile</h1>
-          <p style={{ color: 'var(--secondary-text)', fontSize: '0.95rem' }}>
-            Keep your skills and experience up to date to get matched with the best startups.
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
+            Keep your skills and experience up to date to get matched with the right startups.
           </p>
         </div>
       </div>
@@ -51,10 +51,11 @@ export default function UserProfile({ currentUser, onUpdateProfile, apiBaseUrl }
         <form onSubmit={handleSave}>
           <div className="form-grid-2">
             <div className="form-group">
-              <label className="form-label">Full Name</label>
+              <label className="form-label">Full Name *</label>
               <input 
                 type="text" 
                 className="form-input" 
+                placeholder="Enter your full name"
                 value={name} 
                 onChange={(e) => setName(e.target.value)} 
                 required 
@@ -78,6 +79,7 @@ export default function UserProfile({ currentUser, onUpdateProfile, apiBaseUrl }
               <input 
                 type="text" 
                 className="form-input" 
+                placeholder="Enter your phone number"
                 value={phone} 
                 onChange={(e) => setPhone(e.target.value)} 
               />
@@ -87,6 +89,7 @@ export default function UserProfile({ currentUser, onUpdateProfile, apiBaseUrl }
               <input 
                 type="text" 
                 className="form-input" 
+                placeholder="e.g. B.Tech CSE, 3rd Year"
                 value={education} 
                 onChange={(e) => setEducation(e.target.value)} 
               />
@@ -94,15 +97,16 @@ export default function UserProfile({ currentUser, onUpdateProfile, apiBaseUrl }
           </div>
 
           <div className="form-group">
-            <label className="form-label">Technical Skills (comma-separated)</label>
+            <label className="form-label">Technical Skills * (comma-separated)</label>
             <input 
               type="text" 
               className="form-input" 
+              placeholder="e.g. Java, SQL, HTML, CSS, React, Python"
               value={skills} 
               onChange={(e) => setSkills(e.target.value)} 
               required 
             />
-            <span className="form-hint">Example: Java, SQL, HTML, CSS, React, Python</span>
+            <span className="form-hint">Used for automatic rule-based candidate matching.</span>
           </div>
 
           <div className="form-grid-2">
@@ -123,6 +127,7 @@ export default function UserProfile({ currentUser, onUpdateProfile, apiBaseUrl }
               <input 
                 type="url" 
                 className="form-input" 
+                placeholder="e.g. https://github.com/yourusername"
                 value={portfolioLink} 
                 onChange={(e) => setPortfolioLink(e.target.value)} 
               />
@@ -134,6 +139,7 @@ export default function UserProfile({ currentUser, onUpdateProfile, apiBaseUrl }
             <textarea 
               className="form-textarea" 
               rows="3" 
+              placeholder="Tell us about your interests and project experience"
               value={bio} 
               onChange={(e) => setBio(e.target.value)} 
             />

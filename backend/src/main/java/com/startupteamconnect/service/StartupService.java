@@ -16,9 +16,14 @@ public class StartupService {
         this.startupRepository = startupRepository;
     }
 
+    private String normalizeTitle(String title) {
+        if (title == null) return "";
+        return title.trim().replaceAll("\\s+", " ").toLowerCase();
+    }
+
     public Startup createStartup(Startup startup) {
-        if (startupRepository.existsByTitleIgnoreCase(startup.getTitle())) {
-            throw new RuntimeException("Startup exists with this title.");
+        if (isTitleTaken(startup.getTitle())) {
+            throw new RuntimeException("A startup with this title already exists. Please choose a different title.");
         }
         return startupRepository.save(startup);
     }
@@ -32,10 +37,12 @@ public class StartupService {
     }
 
     public boolean isTitleTaken(String title) {
-        if (title == null || title.trim().isEmpty()) {
+        String normalizedInput = normalizeTitle(title);
+        if (normalizedInput.isEmpty()) {
             return false;
         }
-        return startupRepository.existsByTitleIgnoreCase(title.trim());
+        return startupRepository.findAll().stream()
+                .anyMatch(s -> normalizeTitle(s.getTitle()).equals(normalizedInput));
     }
 
     public List<Startup> getStartupsByFounder(Long founderId) {

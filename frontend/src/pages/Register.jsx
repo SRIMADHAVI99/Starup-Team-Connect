@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import LoginTabs from '../components/LoginTabs';
+import StartupTeamLogo from '../components/StartupTeamLogo';
 
 /**
  * Register Page
@@ -95,9 +96,8 @@ export default function Register({ initialRole = 'user', onRegisterSuccess, onSw
     <div className="auth-wrapper">
       <div className="auth-card" style={{ maxWidth: '520px' }}>
         <div className="auth-header">
-          <div className="auth-logo">
-            <div className="auth-logo-badge">ST</div>
-            <h1 className="auth-title">Startup Team Connect</h1>
+          <div className="auth-logo" style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+            <StartupTeamLogo size={42} showText={true} textStyle={{ fontSize: '1.4rem' }} />
           </div>
           <p className="auth-subtitle">Create your {role === 'user' ? 'User' : 'Founder'} account</p>
         </div>

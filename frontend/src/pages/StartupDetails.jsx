@@ -62,13 +62,13 @@ export default function StartupDetails({
       <div className="details-layout">
         {/* Left Column: Startup Story, Problem & Solution */}
         <div className="details-main">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
             <div>
               <span className="badge badge-skill" style={{ marginBottom: '8px' }}>
                 {startup.category || 'Startup'}
               </span>
-              <h1 style={{ fontSize: '1.8rem', color: 'var(--primary-dark)' }}>{startup.title}</h1>
-              <p style={{ color: 'var(--secondary-text)', fontSize: '0.95rem' }}>
+              <h1 style={{ fontSize: '1.7rem', color: 'var(--text-primary)', fontWeight: 800 }}>{startup.title}</h1>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.92rem' }}>
                 Led by Founder: <strong>{startup.founderName || 'Startup Founder'}</strong>
               </p>
             </div>
@@ -76,7 +76,7 @@ export default function StartupDetails({
             {currentRole === 'user' && (
               <button 
                 className={`btn-icon-save ${isSaved ? 'saved' : ''}`}
-                style={{ padding: '8px 14px', fontSize: '1.1rem' }}
+                style={{ padding: '8px 14px', fontSize: '1.05rem' }}
                 onClick={() => onSave(startup)}
                 title={isSaved ? "Saved" : "Save this startup"}
               >
@@ -85,38 +85,38 @@ export default function StartupDetails({
             )}
           </div>
 
-          <p style={{ fontSize: '1.05rem', lineHeight: '1.6', color: 'var(--text-primary)', marginBottom: '28px' }}>
+          <p style={{ fontSize: '1rem', lineHeight: '1.6', color: 'var(--text-primary)', marginBottom: '24px' }}>
             {startup.shortDescription || startup.description}
           </p>
 
           {/* Problem Statement */}
-          <div style={{ marginBottom: '24px' }}>
-            <h3 style={{ fontSize: '1.1rem', color: 'var(--primary-dark)', marginBottom: '8px' }}>
+          <div style={{ marginBottom: '22px' }}>
+            <h3 style={{ fontSize: '1.05rem', color: 'var(--text-primary)', marginBottom: '8px', fontWeight: 700 }}>
               🎯 The Problem
             </h3>
-            <p style={{ color: 'var(--secondary-text)', lineHeight: '1.5', background: 'var(--off-white)', padding: '14px', borderRadius: 'var(--radius-md)' }}>
+            <p style={{ color: 'var(--text-secondary)', lineHeight: '1.55', background: 'var(--bg-subtle)', border: '1px solid var(--border-color)', padding: '14px', borderRadius: 'var(--radius-md)', fontSize: '0.9rem' }}>
               {startup.problemStatement || 'This startup addresses inefficiency and lack of modern digital tools in the current ecosystem.'}
             </p>
           </div>
 
           {/* Solution */}
-          <div style={{ marginBottom: '28px' }}>
-            <h3 style={{ fontSize: '1.1rem', color: 'var(--primary-dark)', marginBottom: '8px' }}>
+          <div style={{ marginBottom: '24px' }}>
+            <h3 style={{ fontSize: '1.05rem', color: 'var(--text-primary)', marginBottom: '8px', fontWeight: 700 }}>
               💡 The Solution
             </h3>
-            <p style={{ color: 'var(--secondary-text)', lineHeight: '1.5', background: 'var(--off-white)', padding: '14px', borderRadius: 'var(--radius-md)' }}>
+            <p style={{ color: 'var(--text-secondary)', lineHeight: '1.55', background: 'var(--bg-subtle)', border: '1px solid var(--border-color)', padding: '14px', borderRadius: 'var(--radius-md)', fontSize: '0.9rem' }}>
               {startup.solution || 'Building a lightweight, scalable collaborative web platform with smart workflow management.'}
             </p>
           </div>
 
           {/* Open Roles */}
-          <div style={{ marginBottom: '24px' }}>
-            <h3 style={{ fontSize: '1.1rem', color: 'var(--primary-dark)', marginBottom: '10px' }}>
+          <div style={{ marginBottom: '20px' }}>
+            <h3 style={{ fontSize: '1.05rem', color: 'var(--text-primary)', marginBottom: '10px', fontWeight: 700 }}>
               👥 Open Roles
             </h3>
             <div className="tags-wrap">
               {rolesList.map((role, idx) => (
-                <span key={idx} className="badge badge-role" style={{ padding: '6px 14px', fontSize: '0.9rem' }}>
+                <span key={idx} className="badge badge-role" style={{ padding: '6px 14px', fontSize: '0.86rem' }}>
                   {role}
                 </span>
               ))}
@@ -129,25 +129,25 @@ export default function StartupDetails({
           {/* Skill Compatibility Card */}
           {currentRole === 'user' && (
             <div className="details-box">
-              <h4 style={{ fontSize: '1rem', color: 'var(--primary-dark)', marginBottom: '10px' }}>
+              <h4 style={{ fontSize: '0.95rem', color: 'var(--text-primary)', marginBottom: '10px', fontWeight: 700 }}>
                 Skill Compatibility
               </h4>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '8px' }}>
-                <span style={{ fontSize: '2rem', fontWeight: '800', color: matchPercentage > 50 ? '#15803D' : '#D97706' }}>
+                <span style={{ fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-primary)' }}>
                   {matchPercentage}%
                 </span>
-                <span style={{ fontSize: '0.85rem', color: 'var(--secondary-text)' }}>
+                <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>
                   ({matchedSkills.length} of {reqSkillsList.length} skills matched)
                 </span>
               </div>
 
               {matchedSkills.length > 0 && (
-                <div style={{ fontSize: '0.8rem', color: '#15803D', marginBottom: '12px' }}>
-                  <strong>Matched:</strong> {matchedSkills.join(', ')}
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-primary)', marginBottom: '12px', fontWeight: 600 }}>
+                  Matched: {matchedSkills.join(', ')}
                 </div>
               )}
 
-              <div style={{ fontSize: '0.8rem', color: 'var(--secondary-text)' }}>
+              <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                 <strong>Required skills:</strong>
                 <div className="tags-wrap" style={{ marginTop: '6px' }}>
                   {reqSkillsList.map((skill, idx) => {
@@ -169,12 +169,12 @@ export default function StartupDetails({
           {/* Apply Form for Users */}
           {currentRole === 'user' ? (
             <div className="details-box">
-              <h4 style={{ fontSize: '1rem', color: 'var(--primary-dark)', marginBottom: '12px' }}>
+              <h4 style={{ fontSize: '0.95rem', color: 'var(--text-primary)', marginBottom: '12px', fontWeight: 700 }}>
                 Apply to Join Team
               </h4>
 
               {hasApplied ? (
-                <div className="alert alert-success" style={{ margin: 0 }}>
+                <div className="alert alert-success" style={{ margin: 0, fontSize: '0.85rem' }}>
                   ✓ You have already applied for this startup! You can track your status in <strong>My Applications</strong>.
                 </div>
               ) : (
@@ -215,10 +215,10 @@ export default function StartupDetails({
             </div>
           ) : (
             <div className="details-box">
-              <h4 style={{ fontSize: '1rem', color: 'var(--primary-dark)', marginBottom: '8px' }}>
+              <h4 style={{ fontSize: '0.95rem', color: 'var(--text-primary)', marginBottom: '8px', fontWeight: 700 }}>
                 Founder View
               </h4>
-              <p style={{ fontSize: '0.85rem', color: 'var(--secondary-text)' }}>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                 Target team size: <strong>{startup.teamSize || '3-5'}</strong>
               </p>
             </div>

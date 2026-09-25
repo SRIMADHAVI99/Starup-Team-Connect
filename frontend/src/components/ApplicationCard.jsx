@@ -17,19 +17,25 @@ export default function ApplicationCard({
     REJECTED: 'badge-rejected'
   }[application.status] || 'badge-pending';
 
+  const applicantName = application.userName || application.user?.name || 'Applicant';
+  const applicantEmail = application.userEmail || application.user?.email || '';
+  const startupTitle = application.startupTitle || application.startup?.title || 'Startup Project';
+  const founderName = application.founderName || application.startup?.founderName || 'Founder';
+  const userSkills = application.userSkills || application.user?.skills || '';
+
   return (
     <div className="application-card">
       <div className="application-header">
         <div>
           <h4 className="applicant-name">
-            {isFounder ? (application.user?.name || 'Applicant') : (application.startup?.title || 'Startup')}
+            {isFounder ? applicantName : startupTitle}
           </h4>
           <div className="applicant-email">
-            {isFounder ? (application.user?.email) : `Founder: ${application.startup?.founderName || 'Founder'}`}
+            {isFounder ? applicantEmail : `Founder: ${founderName}`}
           </div>
         </div>
         <span className={`badge ${statusClass}`}>
-          {application.status}
+          {application.status || 'PENDING'}
         </span>
       </div>
 
@@ -38,15 +44,15 @@ export default function ApplicationCard({
           <strong>Role Applied:</strong> {application.appliedRole || 'Team Member'}
         </div>
 
-        {isFounder && application.user?.skills && (
+        {isFounder && userSkills && (
           <div style={{ fontSize: '0.85rem', color: 'var(--secondary-text)' }}>
-            <strong>Skills:</strong> {application.user.skills}
+            <strong>Skills:</strong> {userSkills}
           </div>
         )}
 
-        {application.startup?.title && isFounder && (
+        {isFounder && startupTitle && (
           <div style={{ fontSize: '0.82rem', color: 'var(--secondary-indigo)', marginTop: '4px' }}>
-            Startup: <strong>{application.startup.title}</strong>
+            Startup: <strong>{startupTitle}</strong>
           </div>
         )}
 
@@ -58,8 +64,8 @@ export default function ApplicationCard({
       </div>
 
       {/* Founder Action Buttons */}
-      {isFounder && application.status === 'PENDING' && (
-        <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+      {isFounder && (application.status === 'PENDING' || !application.status) && (
+        <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
           <button 
             className="btn btn-primary btn-sm"
             style={{ flex: 1 }}

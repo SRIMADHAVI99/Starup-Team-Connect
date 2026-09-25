@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import CustomModal from '../components/CustomModal';
 
 /**
  * CreateStartup Page
@@ -21,19 +22,28 @@ export default function CreateStartup({
   const [teamSize, setTeamSize] = useState('3-5 members');
   const [category, setCategory] = useState('CleanTech');
 
-  // Title Availability State (Requirement 17)
+  // Title Availability State (Requirement 8 & 9)
   const [titleStatus, setTitleStatus] = useState(null); // null | 'checking' | 'available' | 'taken'
-  const [titleMessage, setTitleMessage] = useState('');
+  const [titleMessage, setTitleMessage] = useState('Enter a startup title');
+
+  // Custom Modal State (Requirement 8)
+  const [modalConfig, setModalConfig] = useState({ isOpen: false, title: '', message: '', type: 'warning' });
 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
-  // Live duplicate title check with debounce (Requirement 17)
+  // Title normalization helper (trim, replace multiple spaces, lowercase)
+  const normalizeTitle = (str) => {
+    if (!str) return '';
+    return str.trim().replace(/\s+/g, ' ').toLowerCase();
+  };
+
+  // Live duplicate title check with debounce (Requirement 8 & 9)
   useEffect(() => {
-    const trimmedTitle = title.trim();
-    if (!trimmedTitle || trimmedTitle.length < 2) {
+    const normalized = normalizeTitle(title);
+    if (!normalized || normalized.length < 2) {
       setTitleStatus(null);
-      setTitleMessage('');
+      setTitleMessage('Enter a startup title');
       return;
     }
 
@@ -42,35 +52,33 @@ export default function CreateStartup({
 
     const timer = setTimeout(async () => {
       try {
-        // Backend check API: GET /api/startups/check-title?title=...
-        const res = await fetch(`${apiBaseUrl}/api/startups/check-title?title=${encodeURIComponent(trimmedTitle)}`);
+        const res = await fetch(`${apiBaseUrl}/api/startups/check-title?title=${encodeURIComponent(normalized)}`);
         if (res.ok) {
           const data = await res.json();
-          // data: { exists: boolean }
           if (data.exists) {
             setTitleStatus('taken');
-            setTitleMessage('⚠️ Startup exists with this title.');
+            setTitleMessage('⚠️ Startup title already registered. Please choose a different title.');
           } else {
             setTitleStatus('available');
             setTitleMessage('✓ Startup title is available.');
           }
         } else {
-          // Fallback to local check if backend is offline
-          const exists = existingStartups.some(s => s.title.toLowerCase() === trimmedTitle.toLowerCase());
+          // Local normalized fallback check
+          const exists = existingStartups.some(s => normalizeTitle(s.title) === normalized);
           if (exists) {
             setTitleStatus('taken');
-            setTitleMessage('⚠️ Startup exists with this title.');
+            setTitleMessage('⚠️ Startup title already registered. Please choose a different title.');
           } else {
             setTitleStatus('available');
             setTitleMessage('✓ Startup title is available.');
           }
         }
       } catch {
-        // Local fallback check
-        const exists = existingStartups.some(s => s.title.toLowerCase() === trimmedTitle.toLowerCase());
+        // Local normalized fallback check
+        const exists = existingStartups.some(s => normalizeTitle(s.title) === normalized);
         if (exists) {
           setTitleStatus('taken');
-          setTitleMessage('⚠️ Startup exists with this title.');
+          setTitleMessage('⚠️ Startup title already registered. Please choose a different title.');
         } else {
           setTitleStatus('available');
           setTitleMessage('✓ Startup title is available.');
@@ -85,8 +93,19 @@ export default function CreateStartup({
     e.preventDefault();
     setErrorMsg('');
 
+    const normalized = normalizeTitle(title);
+    if (!normalized) {
+      setErrorMsg('Please enter a valid startup title.');
+      return;
+    }
+
     if (titleStatus === 'taken') {
-      setErrorMsg('Please select a unique title. A startup with this name already exists.');
+      setModalConfig({
+        isOpen: true,
+        title: 'Startup Already Exists',
+        message: 'This startup title is already registered. Please choose a different title.',
+        type: 'warning'
+      });
       return;
     }
 
@@ -97,8 +116,27 @@ export default function CreateStartup({
 
     setIsLoading(true);
 
+    // Final backend verification on submit
+    try {
+      const checkRes = await fetch(`${apiBaseUrl}/api/startups/check-title?title=${encodeURIComponent(normalized)}`);
+      if (checkRes.ok) {
+        const checkData = await checkRes.json();
+        if (checkData.exists) {
+          setTitleStatus('taken');
+          setModalConfig({
+            isOpen: true,
+            title: 'Startup Already Exists',
+            message: 'This startup title is already registered. Please choose a different title.',
+            type: 'warning'
+          });
+          setIsLoading(false);
+          return;
+        }
+      }
+    } catch (e) {}
+
     const payload = {
-      title: title.trim(),
+      title: title.trim().replace(/\s+/g, ' '),
       shortDescription: shortDescription.trim(),
       problemStatement: problemStatement.trim(),
       solution: solution.trim(),
@@ -122,7 +160,7 @@ export default function CreateStartup({
         onStartupCreated(createdData);
       } else {
         const errorText = await res.text();
-        setErrorMsg(errorText || 'Failed to save startup to database.');
+        setErrorMsg(errorText || 'Unable to create startup. Please try again.');
       }
     } catch (err) {
       console.warn('Backend unavailable, using prototype local save fallback:', err);
@@ -135,6 +173,14 @@ export default function CreateStartup({
 
   return (
     <div>
+      <CustomModal 
+        isOpen={modalConfig.isOpen}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        onClose={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
+      />
+
       <div className="section-header" style={{ maxWidth: '780px', margin: '0 auto 20px auto' }}>
         <div>
           <h1 className="section-title" style={{ fontSize: '1.5rem' }}>Create a New Startup</h1>
@@ -160,13 +206,13 @@ export default function CreateStartup({
               id="title-input"
               type="text"
               className="form-input"
-              placeholder="e.g. EcoTrack"
+              placeholder="e.g. HealthConnect"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               required
             />
             {titleMessage && (
-              <div className={`title-availability-msg ${titleStatus}`}>
+              <div className={`title-availability-msg ${titleStatus || 'default'}`} style={{ marginTop: '6px', fontSize: '0.84rem' }}>
                 {titleMessage}
               </div>
             )}
@@ -207,7 +253,7 @@ export default function CreateStartup({
             <input
               type="text"
               className="form-input"
-              placeholder="A smart waste management and recycling platform."
+              placeholder="Brief summary of your startup idea and product vision."
               value={shortDescription}
               onChange={(e) => setShortDescription(e.target.value)}
               required
@@ -271,7 +317,7 @@ export default function CreateStartup({
               style={{ flex: 1 }}
               disabled={isLoading || titleStatus === 'taken'}
             >
-              {isLoading ? 'Saving Startup...' : 'Create Startup & Save to MySQL'}
+              {isLoading ? 'Saving Startup...' : 'Create Startup & Save'}
             </button>
             <button 
               type="button" 

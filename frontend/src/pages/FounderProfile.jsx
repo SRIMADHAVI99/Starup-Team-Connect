@@ -6,12 +6,12 @@ import React, { useState } from 'react';
  * interests, experience, and vision.
  */
 export default function FounderProfile({ currentUser, onUpdateProfile, onNavigate }) {
-  const [name, setName] = useState(currentUser?.name || 'Ananya Gupta');
-  const [email] = useState(currentUser?.email || 'ananya@example.com');
-  const [phone, setPhone] = useState(currentUser?.phone || '+91 9876543211');
-  const [experience, setExperience] = useState(currentUser?.experience || '2+ years building tech MVPs');
-  const [interests, setInterests] = useState(currentUser?.interests || 'CleanTech, Sustainability, IoT');
-  const [bio, setBio] = useState(currentUser?.bio || 'Founder looking to assemble a passionate student engineering team for smart waste recycling.');
+  const [name, setName] = useState(currentUser?.name || '');
+  const [email] = useState(currentUser?.email || '');
+  const [phone, setPhone] = useState(currentUser?.phone || '');
+  const [experience, setExperience] = useState(currentUser?.experience || '');
+  const [interests, setInterests] = useState(currentUser?.interests || '');
+  const [bio, setBio] = useState(currentUser?.bio || '');
 
   const [savedMsg, setSavedMsg] = useState('');
 
@@ -47,10 +47,11 @@ export default function FounderProfile({ currentUser, onUpdateProfile, onNavigat
         <form onSubmit={handleSave}>
           <div className="form-grid-2">
             <div className="form-group">
-              <label className="form-label">Founder Name</label>
+              <label className="form-label">Founder Name *</label>
               <input 
                 type="text" 
                 className="form-input" 
+                placeholder="Enter your full name"
                 value={name} 
                 onChange={(e) => setName(e.target.value)} 
                 required 
@@ -74,6 +75,7 @@ export default function FounderProfile({ currentUser, onUpdateProfile, onNavigat
               <input 
                 type="text" 
                 className="form-input" 
+                placeholder="Enter your phone number"
                 value={phone} 
                 onChange={(e) => setPhone(e.target.value)} 
               />
@@ -83,6 +85,7 @@ export default function FounderProfile({ currentUser, onUpdateProfile, onNavigat
               <input 
                 type="text" 
                 className="form-input" 
+                placeholder="e.g. CleanTech, FinTech, EdTech"
                 value={interests} 
                 onChange={(e) => setInterests(e.target.value)} 
               />
@@ -94,6 +97,7 @@ export default function FounderProfile({ currentUser, onUpdateProfile, onNavigat
             <input 
               type="text" 
               className="form-input" 
+              placeholder="Describe your background and experience"
               value={experience} 
               onChange={(e) => setExperience(e.target.value)} 
             />
@@ -104,6 +108,7 @@ export default function FounderProfile({ currentUser, onUpdateProfile, onNavigat
             <textarea 
               className="form-textarea" 
               rows="3" 
+              placeholder="Tell us about your startup vision and interests"
               value={bio} 
               onChange={(e) => setBio(e.target.value)} 
             />

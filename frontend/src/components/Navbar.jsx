@@ -1,60 +1,77 @@
-import React from 'react';
+import React, { useState } from 'react';
+import StartupTeamLogo from './StartupTeamLogo';
 
 /**
  * Navbar Component
- * Displays role-specific navigation links and user status.
+ * Displays role-specific navigation links, theme toggle, and user status.
  */
-export default function Navbar({ currentUser, currentRole, currentPage, onNavigate, onLogout }) {
+export default function Navbar({ 
+  currentUser, 
+  currentRole, 
+  currentPage, 
+  onNavigate, 
+  onLogout,
+  theme = 'light',
+  onToggleTheme
+}) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const isDark = theme === 'dark';
+
+  const handleNavClick = (page) => {
+    onNavigate(page);
+    setMobileMenuOpen(false);
+  };
+
   return (
     <header className="navbar">
       <div className="container navbar-inner">
         {/* Brand / Logo */}
         <div 
           className="navbar-brand" 
-          style={{ cursor: 'pointer' }}
-          onClick={() => onNavigate(currentRole === 'founder' ? 'founder-dashboard' : 'user-dashboard')}
+          style={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+          onClick={() => handleNavClick(currentRole === 'founder' ? 'founder-dashboard' : 'user-dashboard')}
         >
-          <div className="brand-icon">ST</div>
-          <span>Startup Team Connect</span>
+          <StartupTeamLogo size={28} isDark={isDark} />
         </div>
 
         {/* Dynamic Navigation Links based on Role */}
-        <nav className="navbar-links">
+        <nav className={`navbar-links ${mobileMenuOpen ? 'mobile-open' : ''}`}>
           {currentRole === 'user' ? (
             <>
               <button
                 className={`nav-link ${currentPage === 'user-dashboard' ? 'active' : ''}`}
-                onClick={() => onNavigate('user-dashboard')}
+                onClick={() => handleNavClick('user-dashboard')}
               >
                 Home
               </button>
               <button
                 className={`nav-link ${currentPage === 'startups' ? 'active' : ''}`}
-                onClick={() => onNavigate('startups')}
+                onClick={() => handleNavClick('startups')}
               >
                 Startups
               </button>
               <button
                 className={`nav-link ${currentPage === 'my-applications' ? 'active' : ''}`}
-                onClick={() => onNavigate('my-applications')}
+                onClick={() => handleNavClick('my-applications')}
               >
                 My Applications
               </button>
               <button
                 className={`nav-link ${currentPage === 'saved-startups' ? 'active' : ''}`}
-                onClick={() => onNavigate('saved-startups')}
+                onClick={() => handleNavClick('saved-startups')}
               >
                 Saved
               </button>
               <button
                 className={`nav-link ${currentPage === 'team' ? 'active' : ''}`}
-                onClick={() => onNavigate('team')}
+                onClick={() => handleNavClick('team')}
               >
                 My Team
               </button>
               <button
                 className={`nav-link ${currentPage === 'user-profile' ? 'active' : ''}`}
-                onClick={() => onNavigate('user-profile')}
+                onClick={() => handleNavClick('user-profile')}
               >
                 Profile
               </button>
@@ -63,31 +80,31 @@ export default function Navbar({ currentUser, currentRole, currentPage, onNaviga
             <>
               <button
                 className={`nav-link ${currentPage === 'founder-dashboard' ? 'active' : ''}`}
-                onClick={() => onNavigate('founder-dashboard')}
+                onClick={() => handleNavClick('founder-dashboard')}
               >
                 Dashboard
               </button>
               <button
                 className={`nav-link ${currentPage === 'create-startup' ? 'active' : ''}`}
-                onClick={() => onNavigate('create-startup')}
+                onClick={() => handleNavClick('create-startup')}
               >
                 + Create Startup
               </button>
               <button
                 className={`nav-link ${currentPage === 'applications' ? 'active' : ''}`}
-                onClick={() => onNavigate('applications')}
+                onClick={() => handleNavClick('applications')}
               >
                 Applications
               </button>
               <button
                 className={`nav-link ${currentPage === 'team' ? 'active' : ''}`}
-                onClick={() => onNavigate('team')}
+                onClick={() => handleNavClick('team')}
               >
                 My Team
               </button>
               <button
                 className={`nav-link ${currentPage === 'founder-profile' ? 'active' : ''}`}
-                onClick={() => onNavigate('founder-profile')}
+                onClick={() => handleNavClick('founder-profile')}
               >
                 Profile
               </button>
@@ -95,14 +112,32 @@ export default function Navbar({ currentUser, currentRole, currentPage, onNaviga
           )}
         </nav>
 
-        {/* User Info & Logout */}
+        {/* Right Section: Theme Toggle, User Info & Logout */}
         <div className="navbar-user">
+          <button 
+            className="theme-toggle-btn"
+            onClick={onToggleTheme}
+            title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          >
+            {isDark ? '☀' : '☾'}
+          </button>
+
           <div className="user-chip">
             <span>{currentUser?.name || (currentRole === 'founder' ? 'Founder' : 'User')}</span>
             <span className="role-pill">{currentRole}</span>
           </div>
+
           <button className="btn btn-outline btn-sm" onClick={onLogout}>
             Logout
+          </button>
+
+          {/* Mobile Hamburger Toggle */}
+          <button 
+            className="mobile-menu-btn"
+            onClick={() => setMobileMenuOpen(prev => !prev)}
+            aria-label="Toggle menu"
+          >
+            ☰
           </button>
         </div>
       </div>

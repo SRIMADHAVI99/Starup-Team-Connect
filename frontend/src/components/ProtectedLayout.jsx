@@ -12,7 +12,9 @@ export default function ProtectedLayout({
   currentRole, 
   currentPage, 
   onNavigate, 
-  onLogout 
+  onLogout,
+  theme = 'light',
+  onToggleTheme
 }) {
   return (
     <div className="layout-wrapper" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -22,6 +24,8 @@ export default function ProtectedLayout({
         currentPage={currentPage}
         onNavigate={onNavigate}
         onLogout={onLogout}
+        theme={theme}
+        onToggleTheme={onToggleTheme}
       />
 
       <main className="container page-container" style={{ flex: 1 }}>
@@ -29,15 +33,16 @@ export default function ProtectedLayout({
       </main>
 
       <footer style={{ 
-        borderTop: '1px solid var(--border-light)', 
+        borderTop: '1px solid var(--border-color)', 
         padding: '20px 0', 
-        background: 'var(--card-white)', 
-        color: 'var(--secondary-text)',
+        background: 'var(--bg-card)', 
+        color: 'var(--text-secondary)',
         fontSize: '0.85rem',
-        textAlign: 'center'
+        textAlign: 'center',
+        transition: 'background-color 0.2s ease, border-color 0.2s ease'
       }}>
         <div className="container">
-          Startup Team Connect &bull; Semester Project Prototype &bull; Java Spring Boot & MySQL + React
+          Startup Team Connect &bull; Technical PBL Collaboration Platform
         </div>
       </footer>
 

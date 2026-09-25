@@ -6,6 +6,8 @@ import './styles/dashboard.css';
 
 // Components
 import ProtectedLayout from './components/ProtectedLayout';
+import StartupCard from './components/StartupCard';
+import CustomModal from './components/CustomModal';
 
 // Pages
 import Login from './pages/Login';
@@ -21,38 +23,6 @@ import UserProfile from './pages/UserProfile';
 import FounderProfile from './pages/FounderProfile';
 
 const API_BASE_URL = `http://${window.location.hostname || 'localhost'}:8080`;
-
-// Initial Demo/Seed Startup (EcoTrack as specified in Requirement 8 & 29)
-const INITIAL_STARTUPS = [
-  {
-    id: 1,
-    title: 'EcoTrack',
-    category: 'CleanTech',
-    shortDescription: 'A smart waste management and recycling platform connecting communities with collection hubs.',
-    problemStatement: 'Urban neighborhoods lack transparency and incentives for effective segregation and collection of recyclable waste.',
-    solution: 'A mobile-first platform that tracks waste collection routes, provides reward points for verified recycling, and alerts collection teams.',
-    requiredRoles: 'Java Developer, UI Designer, IoT Specialist',
-    requiredSkills: 'Java, SQL, HTML, CSS, React',
-    teamSize: '3-4 members',
-    founderId: 1,
-    founderName: 'Ananya Gupta',
-    createdAt: new Date().toISOString()
-  },
-  {
-    id: 2,
-    title: 'SkillBridge',
-    category: 'EdTech',
-    shortDescription: 'Peer-to-peer micro-mentorship platform for engineering students to build open-source projects.',
-    problemStatement: 'Junior students struggle to find real project experience and personalized code review from seniors.',
-    solution: 'Structured collaborative sprints where senior mentors guide small student teams to build resume-worthy MVPs.',
-    requiredRoles: 'Frontend Developer, Database Admin',
-    requiredSkills: 'JavaScript, React, SQL, Git',
-    teamSize: '3 members',
-    founderId: 2,
-    founderName: 'Vikram Mehta',
-    createdAt: new Date().toISOString()
-  }
-];
 
 export default function App() {
   // Authentication State
@@ -72,32 +42,53 @@ export default function App() {
     return saved ? (role === 'founder' ? 'founder-dashboard' : 'user-dashboard') : 'login';
   });
 
+  // Theme State (Light / Dark mode persistence - Requirement 3 & 4)
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('stc_theme') || 'light';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('stc_theme', theme);
+  }, [theme]);
+
+  const handleToggleTheme = () => {
+    setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+  };
+
+  // Global Modal State (replaces native alert popups)
+  const [modalConfig, setModalConfig] = useState({ isOpen: false, title: '', message: '', type: 'info' });
+
+  const showModal = (title, message, type = 'info') => {
+    setModalConfig({ isOpen: true, title, message, type });
+  };
+
   // Startups State
-  const [startups, setStartups] = useState(INITIAL_STARTUPS);
+  const [startups, setStartups] = useState([]);
   const [selectedStartup, setSelectedStartup] = useState(null);
 
   // Applications State
   const [applications, setApplications] = useState([]);
 
-  // Saved Startups State (Requirement 15)
+  // Saved Startups State
   const [savedStartups, setSavedStartups] = useState([]);
 
-  // Formed Team State (Requirement 13 & 19)
+  // Formed Team State
   const [team, setTeam] = useState(null);
 
-  // Load from backend on startup or when user/role changes
+  // Load startups & user applications / teams on mount or role/user change
   useEffect(() => {
     const fetchData = async () => {
       try {
         const res = await fetch(`${API_BASE_URL}/api/startups`);
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data) && data.length > 0) {
+          if (Array.isArray(data)) {
             setStartups(data);
           }
         }
-      } catch {
-        // Backend not yet running; using initial seeds
+      } catch (err) {
+        console.warn('Backend server connecting...');
       }
 
       if (currentUser?.id) {
@@ -123,7 +114,6 @@ export default function App() {
             const teamData = await teamRes.json();
             const activeTeam = Array.isArray(teamData) ? teamData[0] : teamData;
             if (activeTeam && activeTeam.id) {
-              // Fetch team messages
               const msgRes = await fetch(`${API_BASE_URL}/api/teams/${activeTeam.id}/messages`);
               if (msgRes.ok) {
                 const msgData = await msgRes.json();
@@ -133,12 +123,45 @@ export default function App() {
             }
           }
         } catch (e) {
-          console.warn('Backend sync warning:', e);
+          console.warn('Backend sync error:', e);
         }
       }
     };
     fetchData();
-  }, [currentUser, currentRole]);
+  }, [currentUser?.id, currentRole]);
+
+  // Saved startups persistence per user
+  useEffect(() => {
+    if (!currentUser?.id) {
+      setSavedStartups([]);
+      return;
+    }
+
+    const userKey = `stc_saved_user_${currentUser.id}`;
+    const fetchSaved = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/saved-startups/user/${currentUser.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data)) {
+            setSavedStartups(data);
+            localStorage.setItem(userKey, JSON.stringify(data));
+            return;
+          }
+        }
+      } catch (e) {
+        // Fallback to local storage
+      }
+      const localSaved = localStorage.getItem(userKey);
+      if (localSaved) {
+        try {
+          setSavedStartups(JSON.parse(localSaved));
+        } catch (err) {}
+      }
+    };
+
+    fetchSaved();
+  }, [currentUser?.id]);
 
   // Save session to localStorage
   const handleLoginSuccess = (userData, role) => {
@@ -153,10 +176,10 @@ export default function App() {
     setCurrentUser(null);
     localStorage.removeItem('stc_user');
     localStorage.removeItem('stc_role');
+    setSavedStartups([]);
     setCurrentPage('login');
   };
 
-  // Switch between Login and Register views
   const handleSwitchToRegister = (role) => {
     setCurrentRole(role);
     setCurrentPage('register');
@@ -167,40 +190,41 @@ export default function App() {
     setCurrentPage('login');
   };
 
-  // View Startup Details
   const handleViewStartupDetails = (startup) => {
     setSelectedStartup(startup);
     setCurrentPage('startup-details');
   };
 
-  // Apply to Join Startup (Requirement 11)
+  // Apply to Join Startup
   const handleApplyToStartup = async (startup, selectedRole = 'Developer', note = '') => {
     if (!currentUser) return;
 
-    // Check if user already applied
+    // Check if user already applied (Requirement 11)
     const alreadyApplied = applications.some(
       a => (a.startupId === startup.id || a.startup?.id === startup.id) &&
-           (a.userId === currentUser.id || a.user?.email === currentUser.email)
+           (a.userId === currentUser.id || a.userEmail === currentUser.email || a.user?.email === currentUser.email)
     );
 
     if (alreadyApplied) {
-      alert('You have already applied to this startup!');
+      showModal('Already Applied', 'You have already submitted an application to this startup!', 'info');
       return;
     }
 
     const newApplication = {
       id: Date.now(),
       startupId: startup.id,
-      startup: startup,
+      startupTitle: startup.title,
+      founderId: startup.founderId,
+      founderName: startup.founderName,
       userId: currentUser.id,
-      user: currentUser,
+      userName: currentUser.name,
+      userEmail: currentUser.email,
       appliedRole: selectedRole,
       note: note,
       appliedDate: new Date().toISOString(),
       status: 'PENDING'
     };
 
-    // Try backend call
     try {
       const res = await fetch(`${API_BASE_URL}/api/applications`, {
         method: 'POST',
@@ -222,29 +246,47 @@ export default function App() {
       setApplications(prev => [newApplication, ...prev]);
     }
 
-    alert('Application submitted successfully! Track status in "My Applications".');
+    showModal('Application Submitted', 'Your application was submitted successfully! Track status in "My Applications".', 'success');
   };
 
-  // Save / Bookmark Startup (Requirement 15)
-  const handleSaveStartup = (startup) => {
-    setSavedStartups(prev => {
-      const exists = prev.some(s => s.id === startup.id);
-      if (exists) {
-        return prev.filter(s => s.id !== startup.id);
-      } else {
-        return [...prev, startup];
-      }
-    });
+  // Save / Bookmark Startup with Backend Persistence
+  const handleSaveStartup = async (startup) => {
+    if (!currentUser?.id) return;
+    const userKey = `stc_saved_user_${currentUser.id}`;
+    const exists = savedStartups.some(s => s.id === startup.id);
+    let updated;
+
+    if (exists) {
+      updated = savedStartups.filter(s => s.id !== startup.id);
+      setSavedStartups(updated);
+      localStorage.setItem(userKey, JSON.stringify(updated));
+      try {
+        await fetch(`${API_BASE_URL}/api/saved-startups?userId=${currentUser.id}&startupId=${startup.id}`, {
+          method: 'DELETE'
+        });
+      } catch (e) {}
+    } else {
+      updated = [...savedStartups, startup];
+      setSavedStartups(updated);
+      localStorage.setItem(userKey, JSON.stringify(updated));
+      try {
+        await fetch(`${API_BASE_URL}/api/saved-startups`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUser.id, startupId: startup.id })
+        });
+      } catch (e) {}
+    }
   };
 
-  // Create Startup (Requirement 8)
+  // Create Startup
   const handleStartupCreated = (newStartup) => {
     setStartups(prev => [newStartup, ...prev]);
     setCurrentPage('founder-dashboard');
-    alert(`Startup "${newStartup.title}" created successfully and saved!`);
+    showModal('Startup Created', `Startup "${newStartup.title}" created successfully!`, 'success');
   };
 
-  // Founder Accepts Application -> Triggers Team Formation (Requirement 13)
+  // Founder Accepts Application -> Team Formation
   const handleAcceptApplication = async (appId) => {
     let acceptedApp = null;
 
@@ -256,41 +298,38 @@ export default function App() {
       return app;
     }));
 
-    // Call backend API: PUT /api/applications/{id}/accept
     try {
       await fetch(`${API_BASE_URL}/api/applications/${appId}/accept`, {
         method: 'PUT'
       });
-    } catch {
-      // Offline fallback
-    }
+    } catch (e) {}
 
-    // Automatically form team relationship (Requirement 13 & 29)
     if (acceptedApp) {
-      const targetStartup = acceptedApp.startup || startups.find(s => s.id === acceptedApp.startupId) || { title: 'Startup Project' };
-      
+      const targetStartupTitle = acceptedApp.startupTitle || acceptedApp.startup?.title || 'Startup Project';
+      const targetFounderName = acceptedApp.founderName || acceptedApp.startup?.founderName || currentUser?.name || 'Founder';
+
       const newMember = {
-        userId: acceptedApp.user?.id || 1,
-        userName: acceptedApp.user?.name || 'Applicant',
+        userId: acceptedApp.userId || acceptedApp.user?.id || 1,
+        userName: acceptedApp.userName || acceptedApp.user?.name || 'Applicant',
         role: acceptedApp.appliedRole || 'Developer',
-        skills: acceptedApp.user?.skills || 'Technical Skills'
+        skills: acceptedApp.userSkills || acceptedApp.user?.skills || 'Technical Skills'
       };
 
       setTeam(prevTeam => {
         if (!prevTeam) {
           return {
             id: Date.now(),
-            startupTitle: targetStartup.title,
-            founderName: targetStartup.founderName || currentUser?.name || 'Founder',
+            startupTitle: targetStartupTitle,
+            founderName: targetFounderName,
             status: 'Active',
             members: [newMember],
             messages: [
               {
-                id: 1,
-                senderName: targetStartup.founderName || 'Founder',
+                id: Date.now(),
+                senderName: targetFounderName,
                 senderRole: 'founder',
-                text: `Welcome to the ${targetStartup.title} team! Excited to work together.`,
-                timestamp: 'Just now'
+                text: `Welcome to the ${targetStartupTitle} team! Excited to work together.`,
+                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
               }
             ]
           };
@@ -302,11 +341,10 @@ export default function App() {
         }
       });
 
-      alert(`Application accepted! Team automatically formed for "${targetStartup.title}". Check "My Team".`);
+      showModal('Application Accepted', `Application accepted! Team automatically formed for "${targetStartupTitle}". Check "My Team".`, 'success');
     }
   };
 
-  // Founder Rejects Application (Requirement 12)
   const handleRejectApplication = async (appId) => {
     setApplications(prev => prev.map(app => {
       if (app.id === appId) {
@@ -319,16 +357,15 @@ export default function App() {
       await fetch(`${API_BASE_URL}/api/applications/${appId}/reject`, {
         method: 'PUT'
       });
-    } catch {
-      // Offline fallback
-    }
+    } catch (e) {}
   };
 
-  // Team Chat: Post message (Requirement 20)
+  // Team Chat Post Message
   const handleSendMessage = async (text) => {
     if (!team) return;
     const newMsg = {
       id: Date.now(),
+      senderId: currentUser?.id,
       senderName: currentUser?.name || (currentRole === 'founder' ? 'Founder' : 'Team Member'),
       senderRole: currentRole,
       text: text,
@@ -353,28 +390,24 @@ export default function App() {
           })
         });
       } catch (err) {
-        console.warn('Backend message save error:', err);
+        console.warn('Message post warning:', err);
       }
     }
   };
 
-  // User Profile Update
   const handleUpdateUserProfile = (updatedUser) => {
     setCurrentUser(updatedUser);
     localStorage.setItem('stc_user', JSON.stringify(updatedUser));
   };
 
-  // Filter applications relevant to current user
   const userApplications = applications.filter(
-    a => a.userId === currentUser?.id || a.user?.email === currentUser?.email
+    a => Number(a.userId) === Number(currentUser?.id) || a.userEmail === currentUser?.email || a.user?.email === currentUser?.email
   );
 
-  // Filter startups created by this founder
   const founderStartups = startups.filter(
-    s => s.founderId === currentUser?.id || s.founderName === currentUser?.name
+    s => Number(s.founderId) === Number(currentUser?.id) || s.founderName === currentUser?.name
   );
 
-  // Authentication Views
   if (currentPage === 'login') {
     return (
       <Login 
@@ -396,7 +429,6 @@ export default function App() {
     );
   }
 
-  // Authenticated Views wrapped in ProtectedLayout
   return (
     <ProtectedLayout
       currentUser={currentUser}
@@ -404,7 +436,17 @@ export default function App() {
       currentPage={currentPage}
       onNavigate={(page) => setCurrentPage(page)}
       onLogout={handleLogout}
+      theme={theme}
+      onToggleTheme={handleToggleTheme}
     >
+      <CustomModal 
+        isOpen={modalConfig.isOpen}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        onClose={() => setModalConfig(prev => ({ ...prev, isOpen: false }))}
+      />
+
       {/* User Dashboard */}
       {currentPage === 'user-dashboard' && (
         <UserDashboard 
@@ -420,7 +462,7 @@ export default function App() {
         />
       )}
 
-      {/* Startups Listing (User View) */}
+      {/* Startups Listing */}
       {currentPage === 'startups' && (
         <UserDashboard 
           currentUser={currentUser}
@@ -450,25 +492,24 @@ export default function App() {
           {savedStartups.length === 0 ? (
             <div className="empty-state">
               <div className="empty-icon">♡</div>
-              <h3 className="empty-title">No saved startups yet</h3>
-              <p style={{ marginBottom: '16px' }}>Click the heart icon on any startup card to bookmark it here.</p>
+              <h3 className="empty-title">No Saved Startups</h3>
+              <p style={{ marginBottom: '16px', color: 'var(--text-secondary)' }}>You haven't saved any startup opportunities yet.</p>
               <button className="btn btn-primary" onClick={() => setCurrentPage('startups')}>
-                Browse Startups
+                Explore Startups
               </button>
             </div>
           ) : (
             <div className="cards-grid">
               {savedStartups.map(st => (
-                <StartupDetails
+                <StartupCard
                   key={st.id}
                   startup={st}
-                  currentUser={currentUser}
-                  currentRole={currentRole}
-                  onApply={(s, role, note) => handleApplyToStartup(s, role, note)}
+                  userSkills={currentUser?.skills || ''}
+                  onViewDetails={handleViewStartupDetails}
+                  onApply={(s) => handleApplyToStartup(s, 'Developer')}
                   onSave={handleSaveStartup}
                   isSaved={true}
                   hasApplied={userApplications.some(a => a.startupId === st.id)}
-                  onBack={() => setCurrentPage('startups')}
                 />
               ))}
             </div>
@@ -542,6 +583,8 @@ export default function App() {
           currentRole={currentRole}
           onSendMessage={handleSendMessage}
           onNavigate={(page) => setCurrentPage(page)}
+          apiBaseUrl={API_BASE_URL}
+          onUpdateTeamMessages={(msgs) => setTeam(prev => prev ? { ...prev, messages: msgs } : prev)}
         />
       )}
 
