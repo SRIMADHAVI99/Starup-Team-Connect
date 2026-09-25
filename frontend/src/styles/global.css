@@ -1,0 +1,248 @@
+/* ===================================================
+   STARTUP TEAM CONNECT - GLOBAL DESIGN SYSTEM
+   Palette:
+   - Primary Dark: #202642
+   - Secondary Indigo: #555A91
+   - Muted Lavender: #A8A6D5
+   - Soft Blue: #E8ECF7
+   - Off-white Surface: #F7F7F5
+   - Card White: #FFFFFF
+   - Text Primary: #25283A
+   - Secondary Text: #70758A
+   - Muted Accent: #D89A8A
+   =================================================== */
+
+:root {
+  --primary-dark: #202642;
+  --secondary-indigo: #555A91;
+  --muted-lavender: #A8A6D5;
+  --soft-blue: #E8ECF7;
+  --off-white: #F7F7F5;
+  --card-white: #FFFFFF;
+  --text-primary: #25283A;
+  --secondary-text: #70758A;
+  --muted-accent: #D89A8A;
+  
+  --border-light: #E2E6EE;
+  --border-focus: #555A91;
+  --bg-gradient: linear-gradient(180deg, #F4F6FB 0%, #E8ECF7 100%);
+  
+  --shadow-sm: 0 2px 4px rgba(32, 38, 66, 0.04);
+  --shadow-md: 0 4px 12px rgba(32, 38, 66, 0.06);
+  --shadow-lg: 0 10px 24px rgba(32, 38, 66, 0.08);
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-full: 9999px;
+  
+  --font-main: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-main);
+  background: var(--off-white);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+input, textarea, select {
+  font-family: inherit;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+/* Layout Utilities */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.page-container {
+  min-height: calc(100vh - 72px);
+  padding: 32px 0 64px 0;
+}
+
+/* Button Styles */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 18px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background-color: var(--primary-dark);
+  color: #FFFFFF;
+}
+
+.btn-primary:hover {
+  background-color: var(--secondary-indigo);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-secondary {
+  background-color: var(--soft-blue);
+  color: var(--primary-dark);
+}
+
+.btn-secondary:hover {
+  background-color: #DDE4F3;
+}
+
+.btn-outline {
+  border: 1px solid var(--border-light);
+  background: var(--card-white);
+  color: var(--text-primary);
+}
+
+.btn-outline:hover {
+  border-color: var(--secondary-indigo);
+  color: var(--secondary-indigo);
+  background: #FAFBFD;
+}
+
+.btn-accent {
+  background-color: var(--muted-accent);
+  color: #FFFFFF;
+}
+
+.btn-accent:hover {
+  opacity: 0.92;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  border-radius: var(--radius-sm);
+}
+
+.btn-full {
+  width: 100%;
+}
+
+/* Form Controls */
+.form-group {
+  margin-bottom: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.form-input, .form-textarea, .form-select {
+  padding: 11px 14px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  background-color: var(--card-white);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  outline: none;
+}
+
+.form-input:focus, .form-textarea:focus, .form-select:focus {
+  border-color: var(--secondary-indigo);
+  box-shadow: 0 0 0 3px rgba(85, 90, 145, 0.12);
+}
+
+.form-hint {
+  font-size: 0.8rem;
+  color: var(--secondary-text);
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+}
+
+.badge-pending {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.badge-accepted {
+  background: #DEF7EC;
+  color: #03543F;
+}
+
+.badge-rejected {
+  background: #FDE8E8;
+  color: #9B1C1C;
+}
+
+.badge-skill {
+  background: var(--soft-blue);
+  color: var(--primary-dark);
+}
+
+.badge-role {
+  background: #F3F4F6;
+  color: var(--secondary-text);
+  border: 1px solid var(--border-light);
+}
+
+.badge-active {
+  background: #E0F2FE;
+  color: #0369A1;
+}
+
+/* Status Notifications */
+.alert {
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  margin-bottom: 16px;
+}
+
+.alert-success {
+  background: #EDF7EE;
+  color: #1E4620;
+  border: 1px solid #C9E8CA;
+}
+
+.alert-error {
+  background: #FDF0ED;
+  color: #792A1D;
+  border: 1px solid #F5C6BE;
+}
+
+.alert-info {
+  background: #EEF2FA;
+  color: #243B6B;
+  border: 1px solid #CFDBF0;
+}

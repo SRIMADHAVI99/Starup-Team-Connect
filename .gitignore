@@ -1,0 +1,32 @@
+# Node / Frontend
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+dist-ssr/
+*.local
+
+# Maven / Java / Backend
+target/
+backend/target/
+*.class
+*.jar
+*.war
+
+# Database
+backend/data/
+*.db
+*.mv.db
+*.trace.db
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
