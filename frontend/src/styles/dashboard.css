@@ -264,10 +264,25 @@
   flex-direction: column;
   gap: 12px;
   background: var(--bg-primary);
+  width: 100%;
 }
 
-.team-msg {
-  max-width: 80%;
+/* Message Wrapper Rows for Explicit Flex Direction Alignment */
+.message-row {
+  display: flex;
+  width: 100%;
+}
+
+.message-row.own {
+  justify-content: flex-end;
+}
+
+.message-row.other {
+  justify-content: flex-start;
+}
+
+.message-bubble {
+  max-width: 78%;
   padding: 10px 14px;
   border-radius: var(--radius-md);
   font-size: 0.88rem;
@@ -275,6 +290,50 @@
   word-break: break-word;
 }
 
+/* Current user: RIGHT ALIGNED - Blue bubble, White text */
+.message-row.own .message-bubble {
+  background: #2563EB;
+  color: #FFFFFF;
+  border-bottom-right-radius: 2px;
+}
+
+.message-row.own .message-author {
+  font-size: 0.74rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  color: #DBEAFE;
+}
+
+/* Other members: LEFT ALIGNED - Light Blue bubble, Dark Navy text */
+.message-row.other .message-bubble {
+  background: #EFF6FF;
+  border: 1px solid #DBEAFE;
+  color: #0F172A;
+  border-bottom-left-radius: 2px;
+}
+
+.message-row.other .message-author {
+  font-size: 0.74rem;
+  font-weight: 700;
+  margin-bottom: 4px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  color: #2563EB;
+}
+
+/* Backward compatibility aliases */
+.team-msg {
+  max-width: 78%;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  font-size: 0.88rem;
+  line-height: 1.4;
+  word-break: break-word;
+}
 .team-msg-author {
   font-size: 0.74rem;
   font-weight: 700;
@@ -283,23 +342,13 @@
   gap: 6px;
   align-items: center;
 }
-
-/* Current user: RIGHT ALIGNED - Blue bubble, White text */
 .team-msg.mine {
   align-self: flex-end;
   margin-left: auto;
   background: #2563EB;
   color: #FFFFFF;
   border-bottom-right-radius: 2px;
-  text-align: left;
 }
-
-.team-msg.mine .team-msg-author {
-  color: #DBEAFE;
-  justify-content: flex-start;
-}
-
-/* Other members: LEFT ALIGNED - Light Blue bubble, Dark Navy text */
 .team-msg.theirs {
   align-self: flex-start;
   margin-right: auto;
@@ -307,12 +356,6 @@
   border: 1px solid #DBEAFE;
   color: #0F172A;
   border-bottom-left-radius: 2px;
-  text-align: left;
-}
-
-.team-msg.theirs .team-msg-author {
-  color: #2563EB;
-  justify-content: flex-start;
 }
 
 .chat-input-bar {

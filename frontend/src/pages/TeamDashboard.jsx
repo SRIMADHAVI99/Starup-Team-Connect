@@ -208,15 +208,19 @@ export default function TeamDashboard({
               </div>
             ) : (
               messages.map((msg, idx) => {
-                // Ownership strictly determined by user ID (Requirement 8)
-                const isMine = currentUser?.id && Number(msg.senderId) === Number(currentUser.id);
+                // Determine ownership ONLY using the logged-in user's ID
+                const isOwnMessage = Boolean(
+                  currentUser?.id && msg.senderId && Number(msg.senderId) === Number(currentUser.id)
+                );
 
                 return (
-                  <div key={msg.id || `msg-${idx}`} className={`team-msg ${isMine ? 'mine' : 'theirs'}`}>
-                    <div className="team-msg-author" style={{ opacity: 0.85 }}>
-                      {msg.senderName} &bull; <span style={{ opacity: 0.75, fontSize: '0.7rem' }}>{msg.timestamp || (msg.sentAt ? new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now')}</span>
+                  <div key={msg.id || `msg-${idx}`} className={`message-row ${isOwnMessage ? 'own' : 'other'}`}>
+                    <div className="message-bubble">
+                      <div className="message-author">
+                        {msg.senderName} &bull; <span style={{ opacity: 0.75, fontSize: '0.7rem' }}>{msg.timestamp || (msg.sentAt ? new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now')}</span>
+                      </div>
+                      <div className="message-text">{msg.text}</div>
                     </div>
-                    <div>{msg.text}</div>
                   </div>
                 );
               })
