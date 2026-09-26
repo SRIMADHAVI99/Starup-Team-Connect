@@ -143,25 +143,17 @@ export default function App() {
     setModalConfig({ isOpen: true, title, message, type });
   };
 
-  // Default demo startup for offline preview
-  const DEFAULT_STARTUPS = [
-    {
-      id: 1,
-      title: 'EcoTrack',
-      category: 'CleanTech',
-      shortDescription: 'A smart waste management and recycling platform connecting communities with collection hubs.',
-      problemStatement: 'Urban communities lack systematic tracking and incentives for segregated recyclable waste collection.',
-      solution: 'A smart dashboard and mobile route coordinator that rewards verified recycling and alerts local collection hubs.',
-      requiredRoles: 'Java Developer, UI Designer, IoT Specialist',
-      requiredSkills: 'Java, SQL, HTML, CSS',
-      teamSize: '3-4 members',
-      founderId: 1,
-      founderName: 'Ananya Gupta'
+  // Startups State with LocalStorage Persistence
+  const [startups, setStartups] = useState(() => {
+    const saved = localStorage.getItem('stc_startups');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) {}
     }
-  ];
-
-  // Startups State
-  const [startups, setStartups] = useState(DEFAULT_STARTUPS);
+    return [];
+  });
   const [startupsError, setStartupsError] = useState(null);
   const [selectedStartup, setSelectedStartup] = useState(null);
 
@@ -198,9 +190,12 @@ export default function App() {
         const res = await fetch(`${API_BASE_URL}/api/startups`);
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data) && data.length > 0) {
+          if (Array.isArray(data)) {
             setStartups(prev => {
-              if (JSON.stringify(prev) !== JSON.stringify(data)) return data;
+              if (JSON.stringify(prev) !== JSON.stringify(data)) {
+                localStorage.setItem('stc_startups', JSON.stringify(data));
+                return data;
+              }
               return prev;
             });
             setStartupsError(null);
@@ -437,20 +432,22 @@ export default function App() {
 
   // Create Startup & Re-fetch from Backend DB (Requirement 1 & 8)
   const handleStartupCreated = async (newStartup) => {
+    let updatedList = [newStartup, ...startups.filter(s => String(s.id) !== String(newStartup.id) && s.title !== newStartup.title)];
     try {
       const res = await fetch(`${API_BASE_URL}/api/startups`);
       if (res.ok) {
         const data = await res.json();
-        if (Array.isArray(data)) {
-          setStartups(data);
-          setStartupsError(null);
+        if (Array.isArray(data) && data.length > 0) {
+          updatedList = data;
         }
-      } else {
-        setStartups(prev => [newStartup, ...prev]);
       }
     } catch (e) {
-      setStartups(prev => [newStartup, ...prev]);
+      console.warn('Backend server connecting during startup creation:', e);
     }
+
+    setStartups(updatedList);
+    localStorage.setItem('stc_startups', JSON.stringify(updatedList));
+    setStartupsError(null);
     setCurrentPage('founder-dashboard');
     showModal('Startup Created', `Startup "${newStartup.title}" created successfully!`, 'success');
   };
@@ -569,13 +566,19 @@ export default function App() {
     localStorage.setItem('stc_user', JSON.stringify(updatedUser));
   };
 
-  const userApplications = applications.filter(
-    a => currentUser?.id && Number(a.userId || a.user?.id) === Number(currentUser.id)
-  );
+  const userApplications = applications.filter(a => {
+    if (!currentUser) return false;
+    const matchId = a.userId != null && currentUser.id != null && String(a.userId) === String(currentUser.id);
+    const matchEmail = a.userEmail && currentUser.email && String(a.userEmail).trim().toLowerCase() === String(currentUser.email).trim().toLowerCase();
+    return matchId || matchEmail;
+  });
 
-  const founderStartups = startups.filter(
-    s => currentUser?.id && Number(s.founderId) === Number(currentUser.id)
-  );
+  const founderStartups = startups.filter(s => {
+    if (!currentUser) return false;
+    const matchId = s.founderId != null && currentUser.id != null && String(s.founderId) === String(currentUser.id);
+    const matchName = s.founderName && currentUser.name && String(s.founderName).trim().toLowerCase() === String(currentUser.name).trim().toLowerCase();
+    return matchId || matchName;
+  });
 
   if (currentPage === 'login') {
     return (
