@@ -286,7 +286,7 @@ export default function App() {
       if (localSaved) {
         try {
           setSavedStartups(JSON.parse(localSaved));
-        } catch (err) {}
+        } catch (err) { }
       }
     };
 
@@ -347,7 +347,7 @@ export default function App() {
     // Check if user already applied (Requirement 11)
     const alreadyApplied = applications.some(
       a => (a.startupId === startup.id || a.startup?.id === startup.id) &&
-           (a.userId === currentUser.id || a.userEmail === currentUser.email || a.user?.email === currentUser.email)
+        (a.userId === currentUser.id || a.userEmail === currentUser.email || a.user?.email === currentUser.email)
     );
 
     if (alreadyApplied) {
@@ -471,7 +471,7 @@ export default function App() {
       await fetch(`${API_BASE_URL}/api/applications/${appId}/accept`, {
         method: 'PUT'
       });
-    } catch (e) {}
+    } catch (e) { }
 
     if (acceptedApp) {
       const targetStartupTitle = acceptedApp.startupTitle || acceptedApp.startup?.title || 'Startup Project';
@@ -527,7 +527,7 @@ export default function App() {
       await fetch(`${API_BASE_URL}/api/applications/${appId}/reject`, {
         method: 'PUT'
       });
-    } catch (e) {}
+    } catch (e) { }
   };
 
   // Team Chat Post Message (Requirement 7)
@@ -579,7 +579,7 @@ export default function App() {
 
   if (currentPage === 'login') {
     return (
-      <Login 
+      <Login
         onLoginSuccess={handleLoginSuccess}
         onSwitchToRegister={handleSwitchToRegister}
         apiBaseUrl={API_BASE_URL}
@@ -589,7 +589,7 @@ export default function App() {
 
   if (currentPage === 'register') {
     return (
-      <Register 
+      <Register
         initialRole={currentRole}
         onRegisterSuccess={handleLoginSuccess}
         onSwitchToLogin={handleSwitchToLogin}
@@ -608,7 +608,7 @@ export default function App() {
       theme={theme}
       onToggleTheme={handleToggleTheme}
     >
-      <CustomModal 
+      <CustomModal
         isOpen={modalConfig.isOpen}
         title={modalConfig.title}
         message={modalConfig.message}
@@ -618,7 +618,7 @@ export default function App() {
 
       {/* User Dashboard */}
       {currentPage === 'user-dashboard' && (
-        <UserDashboard 
+        <UserDashboard
           currentUser={currentUser}
           startups={startups}
           applications={userApplications}
@@ -634,7 +634,7 @@ export default function App() {
 
       {/* Startups Listing */}
       {currentPage === 'startups' && (
-        <UserDashboard 
+        <UserDashboard
           currentUser={currentUser}
           startups={startups}
           applications={userApplications}
@@ -690,7 +690,7 @@ export default function App() {
 
       {/* Founder Dashboard */}
       {currentPage === 'founder-dashboard' && (
-        <FounderDashboard 
+        <FounderDashboard
           currentUser={currentUser}
           founderStartups={founderStartups}
           applications={applications}
@@ -704,7 +704,7 @@ export default function App() {
 
       {/* Create Startup */}
       {currentPage === 'create-startup' && (
-        <CreateStartup 
+        <CreateStartup
           currentUser={currentUser}
           onStartupCreated={handleStartupCreated}
           onCancel={() => setCurrentPage('founder-dashboard')}
@@ -715,7 +715,7 @@ export default function App() {
 
       {/* Startup Details */}
       {currentPage === 'startup-details' && (
-        <StartupDetails 
+        <StartupDetails
           startup={selectedStartup}
           currentUser={currentUser}
           currentRole={currentRole}
@@ -729,7 +729,7 @@ export default function App() {
 
       {/* Founder Applications */}
       {currentPage === 'applications' && (
-        <Applications 
+        <Applications
           applications={applications}
           onAcceptApplication={handleAcceptApplication}
           onRejectApplication={handleRejectApplication}
@@ -739,7 +739,7 @@ export default function App() {
 
       {/* User Applications */}
       {currentPage === 'my-applications' && (
-        <MyApplications 
+        <MyApplications
           applications={userApplications}
           onNavigate={(page) => setCurrentPage(page)}
           onViewStartup={handleViewStartupDetails}
@@ -748,7 +748,7 @@ export default function App() {
 
       {/* Team Dashboard */}
       {currentPage === 'team' && (
-        <TeamDashboard 
+        <TeamDashboard
           team={team}
           currentUser={currentUser}
           currentRole={currentRole}
@@ -761,7 +761,7 @@ export default function App() {
 
       {/* User Profile */}
       {currentPage === 'user-profile' && (
-        <UserProfile 
+        <UserProfile
           currentUser={currentUser}
           onUpdateProfile={handleUpdateUserProfile}
           apiBaseUrl={API_BASE_URL}
@@ -770,7 +770,7 @@ export default function App() {
 
       {/* Founder Profile */}
       {currentPage === 'founder-profile' && (
-        <FounderProfile 
+        <FounderProfile
           currentUser={currentUser}
           onUpdateProfile={handleUpdateUserProfile}
           onNavigate={(page) => setCurrentPage(page)}

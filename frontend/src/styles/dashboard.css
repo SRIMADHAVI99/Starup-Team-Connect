@@ -269,8 +269,8 @@
 
 /* Message Wrapper Rows for Explicit Flex Direction Alignment */
 .message-row {
-  display: flex;
-  width: 100%;
+  display: flex !important;
+  width: 100% !important;
 }
 
 .message-row.own-message,
@@ -298,6 +298,9 @@
   background: #2563EB !important;
   color: #FFFFFF !important;
   border-bottom-right-radius: 2px;
+  margin-left: auto !important;
+  margin-right: 0 !important;
+  align-self: flex-end !important;
 }
 
 .message-row.own-message .message-author,
@@ -308,6 +311,7 @@
   display: flex;
   gap: 6px;
   align-items: center;
+  justify-content: flex-end;
   color: #DBEAFE !important;
 }
 
@@ -318,6 +322,9 @@
   border: 1px solid #DBEAFE !important;
   color: #0F172A !important;
   border-bottom-left-radius: 2px;
+  margin-right: auto !important;
+  margin-left: 0 !important;
+  align-self: flex-start !important;
 }
 
 .message-row.other-message .message-author,
@@ -328,6 +335,7 @@
   display: flex;
   gap: 6px;
   align-items: center;
+  justify-content: flex-start;
   color: #2563EB !important;
 }
 

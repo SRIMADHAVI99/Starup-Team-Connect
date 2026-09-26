@@ -1,16 +1,67 @@
 package com.startupteamconnect.controller;
 
+import com.startupteamconnect.repository.*;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 /**
  * HomeController
- * Provides a clean status landing page when visiting http://localhost:8080/
- * instead of the default Spring Boot Whitelabel 404 page.
+ * Provides status landing page and admin data reset endpoint.
  */
 @RestController
+@CrossOrigin(origins = "${app.cors.allowed-origins:http://localhost:5173}")
 public class HomeController {
+
+    private final UserRepository userRepository;
+    private final FounderRepository founderRepository;
+    private final StartupRepository startupRepository;
+    private final ApplicationRepository applicationRepository;
+    private final SavedStartupRepository savedStartupRepository;
+    private final TeamRepository teamRepository;
+    private final TeamMemberRepository teamMemberRepository;
+    private final TeamMessageRepository teamMessageRepository;
+
+    public HomeController(UserRepository userRepository,
+                          FounderRepository founderRepository,
+                          StartupRepository startupRepository,
+                          ApplicationRepository applicationRepository,
+                          SavedStartupRepository savedStartupRepository,
+                          TeamRepository teamRepository,
+                          TeamMemberRepository teamMemberRepository,
+                          TeamMessageRepository teamMessageRepository) {
+        this.userRepository = userRepository;
+        this.founderRepository = founderRepository;
+        this.startupRepository = startupRepository;
+        this.applicationRepository = applicationRepository;
+        this.savedStartupRepository = savedStartupRepository;
+        this.teamRepository = teamRepository;
+        this.teamMemberRepository = teamMemberRepository;
+        this.teamMessageRepository = teamMessageRepository;
+    }
+
+    @RequestMapping(value = "/api/clear-all-data", method = {RequestMethod.GET, RequestMethod.POST, RequestMethod.DELETE})
+    public ResponseEntity<?> clearAllData() {
+        try {
+            teamMessageRepository.deleteAll();
+            teamMemberRepository.deleteAll();
+            teamRepository.deleteAll();
+            applicationRepository.deleteAll();
+            savedStartupRepository.deleteAll();
+            startupRepository.deleteAll();
+            userRepository.deleteAll();
+            founderRepository.deleteAll();
+
+            return ResponseEntity.ok(Map.of(
+                    "status", "success",
+                    "message", "All test data (users, founders, startups, applications, teams, messages) cleared successfully."
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
 
     @GetMapping(value = "/", produces = MediaType.TEXT_HTML_VALUE)
     public String index() {

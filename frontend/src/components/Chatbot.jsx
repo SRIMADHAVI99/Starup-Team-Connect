@@ -124,8 +124,10 @@ export default function Chatbot() {
 
           <div className="chatbot-messages">
             {messages.map((m) => (
-              <div key={m.id} className={`chat-bubble ${m.sender}`}>
-                {m.text}
+              <div key={m.id} className={`chat-bubble-wrapper ${m.sender}`}>
+                <div className={`chat-bubble ${m.sender}`}>
+                  {m.text}
+                </div>
               </div>
             ))}
           </div>
