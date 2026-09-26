@@ -22,13 +22,7 @@ import TeamDashboard from './pages/TeamDashboard';
 import UserProfile from './pages/UserProfile';
 import FounderProfile from './pages/FounderProfile';
 
-const getApiBaseUrl = () => {
-  if (import.meta.env.VITE_API_BASE_URL) {
-    return import.meta.env.VITE_API_BASE_URL;
-  }
-  return 'http://localhost:8080';
-};
-const API_BASE_URL = getApiBaseUrl();
+import { API_BASE_URL } from './config/api';
 
 const PAGE_URL_MAP = {
   'user-dashboard': '/user-dashboard',
@@ -149,8 +143,9 @@ export default function App() {
     setModalConfig({ isOpen: true, title, message, type });
   };
 
-  // Startups State
+  // Startups State & Error State
   const [startups, setStartups] = useState([]);
+  const [startupsError, setStartupsError] = useState(null);
   const [selectedStartup, setSelectedStartup] = useState(null);
 
   // Applications State
@@ -162,6 +157,23 @@ export default function App() {
   // Formed Team State
   const [team, setTeam] = useState(null);
 
+  // Handle browser back/forward buttons (popstate)
+  useEffect(() => {
+    const handlePopState = () => {
+      if (currentUser?.id) {
+        const pathPage = getPageFromPath(window.location.pathname, currentRole);
+        if (pathPage) {
+          const validPage = getValidPageForRole(pathPage, currentRole);
+          if (validPage) {
+            setCurrentPage(validPage);
+          }
+        }
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [currentUser?.id, currentRole]);
+
   // Load startups & user applications / teams on mount or role/user change
   useEffect(() => {
     const fetchData = async () => {
@@ -171,10 +183,13 @@ export default function App() {
           const data = await res.json();
           if (Array.isArray(data)) {
             setStartups(data);
+            setStartupsError(null);
           }
+        } else {
+          setStartupsError('Unable to connect to backend server. Please verify database/server connection.');
         }
       } catch (err) {
-        console.warn('Backend server connecting...');
+        setStartupsError('Unable to connect to backend server. Please verify database/server connection.');
       }
 
       if (currentUser?.id) {
@@ -391,9 +406,22 @@ export default function App() {
     }
   };
 
-  // Create Startup
-  const handleStartupCreated = (newStartup) => {
-    setStartups(prev => [newStartup, ...prev]);
+  // Create Startup & Re-fetch from Backend DB (Requirement 1 & 8)
+  const handleStartupCreated = async (newStartup) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/startups`);
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setStartups(data);
+          setStartupsError(null);
+        }
+      } else {
+        setStartups(prev => [newStartup, ...prev]);
+      }
+    } catch (e) {
+      setStartups(prev => [newStartup, ...prev]);
+    }
     setCurrentPage('founder-dashboard');
     showModal('Startup Created', `Startup "${newStartup.title}" created successfully!`, 'success');
   };
@@ -566,6 +594,7 @@ export default function App() {
           applications={userApplications}
           savedStartups={savedStartups}
           team={team}
+          startupsError={startupsError}
           onViewDetails={handleViewStartupDetails}
           onApply={(st) => handleApplyToStartup(st, 'Developer')}
           onSave={handleSaveStartup}
@@ -581,6 +610,7 @@ export default function App() {
           applications={userApplications}
           savedStartups={savedStartups}
           team={team}
+          startupsError={startupsError}
           onViewDetails={handleViewStartupDetails}
           onApply={(st) => handleApplyToStartup(st, 'Developer')}
           onSave={handleSaveStartup}
@@ -714,6 +744,7 @@ export default function App() {
           currentUser={currentUser}
           onUpdateProfile={handleUpdateUserProfile}
           onNavigate={(page) => setCurrentPage(page)}
+          apiBaseUrl={API_BASE_URL}
         />
       )}
     </ProtectedLayout>

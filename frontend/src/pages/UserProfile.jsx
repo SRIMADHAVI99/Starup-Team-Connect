@@ -16,9 +16,13 @@ export default function UserProfile({ currentUser, onUpdateProfile, apiBaseUrl }
   const [portfolioLink, setPortfolioLink] = useState(currentUser?.portfolioLink || '');
 
   const [savedMsg, setSavedMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
+    setSavedMsg('');
+    setErrorMsg('');
+
     const updated = {
       ...currentUser,
       name,
@@ -29,6 +33,26 @@ export default function UserProfile({ currentUser, onUpdateProfile, apiBaseUrl }
       bio,
       portfolioLink
     };
+
+    if (currentUser?.id) {
+      try {
+        const res = await fetch(`${apiBaseUrl}/api/users/${currentUser.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updated)
+        });
+        if (res.ok) {
+          const savedData = await res.json();
+          onUpdateProfile(savedData);
+          setSavedMsg('Profile updated successfully!');
+          setTimeout(() => setSavedMsg(''), 3000);
+          return;
+        }
+      } catch (err) {
+        console.warn('Backend update error:', err);
+      }
+    }
+
     onUpdateProfile(updated);
     setSavedMsg('Profile updated successfully!');
     setTimeout(() => setSavedMsg(''), 3000);

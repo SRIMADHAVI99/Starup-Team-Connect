@@ -1,4 +1,5 @@
 import React from 'react';
+import { calculateSkillCompatibility, parseRoles, parseSkills } from '../utils/skillMatcher';
 
 /**
  * StartupCard Component
@@ -6,7 +7,7 @@ import React from 'react';
  */
 export default function StartupCard({ 
   startup, 
-  userSkills = [], 
+  userSkills = '', 
   onViewDetails, 
   onApply, 
   onSave, 
@@ -14,49 +15,12 @@ export default function StartupCard({
   hasApplied = false,
   showApplyButton = true
 }) {
-  // Rule-based Skill Compatibility Calculation (Requirement 16)
-  const calculateCompatibility = () => {
-    if (!startup.requiredSkills || !userSkills || userSkills.length === 0) {
-      return null;
-    }
-    
-    // Split comma separated or array
-    const reqSkills = Array.isArray(startup.requiredSkills)
-      ? startup.requiredSkills
-      : startup.requiredSkills.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+  const compatibility = userSkills && startup?.requiredSkills 
+    ? calculateSkillCompatibility(userSkills, startup.requiredSkills)
+    : null;
 
-    if (reqSkills.length === 0) return null;
-
-    const mySkills = Array.isArray(userSkills)
-      ? userSkills.map(s => s.toLowerCase().trim())
-      : userSkills.split(',').map(s => s.toLowerCase().trim()).filter(Boolean);
-
-    const matches = reqSkills.filter(s => mySkills.includes(s));
-    const percent = Math.round((matches.length / reqSkills.length) * 100);
-
-    return {
-      percent,
-      matchedCount: matches.length,
-      totalCount: reqSkills.length
-    };
-  };
-
-  const compatibility = calculateCompatibility();
-
-  const parseSkillsList = (skills) => {
-    if (!skills) return [];
-    if (Array.isArray(skills)) return skills;
-    return skills.split(',').map(s => s.trim()).filter(Boolean);
-  };
-
-  const parseRolesList = (roles) => {
-    if (!roles) return [];
-    if (Array.isArray(roles)) return roles;
-    return roles.split(',').map(r => r.trim()).filter(Boolean);
-  };
-
-  const skillsList = parseSkillsList(startup.requiredSkills);
-  const rolesList = parseRolesList(startup.requiredRoles);
+  const skillsList = parseSkills(startup?.requiredSkills);
+  const rolesList = parseRoles(startup?.requiredRoles);
 
   return (
     <div className="startup-card">

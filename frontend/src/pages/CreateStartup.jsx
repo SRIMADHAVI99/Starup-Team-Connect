@@ -135,6 +135,11 @@ export default function CreateStartup({
       }
     } catch (e) {}
 
+    if (!currentUser || !currentUser.id) {
+      setErrorMsg('You must be logged in as a founder to create a startup.');
+      return;
+    }
+
     const payload = {
       title: title.trim().replace(/\s+/g, ' '),
       shortDescription: shortDescription.trim(),
@@ -144,8 +149,8 @@ export default function CreateStartup({
       requiredSkills: requiredSkills.trim(),
       teamSize: teamSize.trim(),
       category: category.trim(),
-      founderId: currentUser?.id || 1,
-      founderName: currentUser?.name || 'Founder'
+      founderId: currentUser.id,
+      founderName: currentUser.name || 'Founder'
     };
 
     try {
@@ -163,9 +168,7 @@ export default function CreateStartup({
         setErrorMsg(errorText || 'Unable to create startup. Please try again.');
       }
     } catch (err) {
-      console.warn('Backend unavailable, using prototype local save fallback:', err);
-      const mockCreated = { id: Date.now(), ...payload, createdAt: new Date().toISOString() };
-      onStartupCreated(mockCreated);
+      setErrorMsg('Unable to connect to the backend server. Please check your network and try again.');
     } finally {
       setIsLoading(false);
     }

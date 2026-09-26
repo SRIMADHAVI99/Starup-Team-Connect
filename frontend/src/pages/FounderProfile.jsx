@@ -5,7 +5,7 @@ import React, { useState } from 'react';
  * Displays and allows editing of founder information,
  * interests, experience, and vision.
  */
-export default function FounderProfile({ currentUser, onUpdateProfile, onNavigate }) {
+export default function FounderProfile({ currentUser, onUpdateProfile, onNavigate, apiBaseUrl }) {
   const [name, setName] = useState(currentUser?.name || '');
   const [email] = useState(currentUser?.email || '');
   const [phone, setPhone] = useState(currentUser?.phone || '');
@@ -15,8 +15,10 @@ export default function FounderProfile({ currentUser, onUpdateProfile, onNavigat
 
   const [savedMsg, setSavedMsg] = useState('');
 
-  const handleSave = (e) => {
+  const handleSave = async (e) => {
     e.preventDefault();
+    setSavedMsg('');
+
     const updated = {
       ...currentUser,
       name,
@@ -25,6 +27,26 @@ export default function FounderProfile({ currentUser, onUpdateProfile, onNavigat
       interests,
       bio
     };
+
+    if (currentUser?.id && apiBaseUrl) {
+      try {
+        const res = await fetch(`${apiBaseUrl}/api/founders/${currentUser.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updated)
+        });
+        if (res.ok) {
+          const savedData = await res.json();
+          onUpdateProfile(savedData);
+          setSavedMsg('Founder profile saved successfully!');
+          setTimeout(() => setSavedMsg(''), 3000);
+          return;
+        }
+      } catch (err) {
+        console.warn('Backend update error:', err);
+      }
+    }
+
     onUpdateProfile(updated);
     setSavedMsg('Founder profile saved successfully!');
     setTimeout(() => setSavedMsg(''), 3000);

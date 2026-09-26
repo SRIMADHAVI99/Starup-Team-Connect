@@ -45,15 +45,7 @@ export default function Login({ onLoginSuccess, onSwitchToRegister, apiBaseUrl }
         setErrorMsg(errorText || 'Invalid email or password.');
       }
     } catch (err) {
-      console.warn('Backend server offline or unreachable, using local session fallback:', err);
-      const localUser = {
-        id: Date.now(),
-        name: email.split('@')[0],
-        email: email,
-        skills: '',
-        bio: ''
-      };
-      onLoginSuccess(localUser, role);
+      setErrorMsg('Unable to connect to the backend server. Please check your network and try again.');
     } finally {
       setIsLoading(false);
     }

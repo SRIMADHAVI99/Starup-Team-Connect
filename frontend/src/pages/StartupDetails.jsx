@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { calculateSkillCompatibility, parseRoles, parseSkills } from '../utils/skillMatcher';
 
 /**
  * StartupDetails Page
@@ -24,26 +25,20 @@ export default function StartupDetails({
     );
   }
 
-  // Parse roles
-  const rolesList = startup.requiredRoles 
-    ? (Array.isArray(startup.requiredRoles) ? startup.requiredRoles : startup.requiredRoles.split(',').map(r => r.trim()).filter(Boolean))
-    : [];
+  // Parse roles & skills
+  const rolesList = parseRoles(startup.requiredRoles);
+  const reqSkillsList = parseSkills(startup.requiredSkills);
+  const userSkills = currentUser?.skills || '';
 
   const [selectedRole, setSelectedRole] = useState(rolesList[0] || 'Developer');
   const [applicationNote, setApplicationNote] = useState('');
   const [isApplying, setIsApplying] = useState(false);
 
-  // Skill Compatibility logic
-  const userSkills = currentUser?.skills || '';
-  const reqSkillsList = startup.requiredSkills
-    ? (Array.isArray(startup.requiredSkills) ? startup.requiredSkills : startup.requiredSkills.split(',').map(s => s.trim()).filter(Boolean))
-    : [];
-
-  const mySkillsList = userSkills.split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
-  const matchedSkills = reqSkillsList.filter(s => mySkillsList.includes(s.toLowerCase()));
-  const matchPercentage = reqSkillsList.length > 0 
-    ? Math.round((matchedSkills.length / reqSkillsList.length) * 100)
-    : 0;
+  // Skill Compatibility logic (Requirement 2)
+  const compat = calculateSkillCompatibility(userSkills, startup.requiredSkills);
+  const matchedSkills = compat.matchedSkills;
+  const matchPercentage = compat.percent;
+  const userSkillsList = parseSkills(userSkills);
 
   const handleApplyClick = () => {
     setIsApplying(true);
@@ -151,7 +146,7 @@ export default function StartupDetails({
                 <strong>Required skills:</strong>
                 <div className="tags-wrap" style={{ marginTop: '6px' }}>
                   {reqSkillsList.map((skill, idx) => {
-                    const isMatched = mySkillsList.includes(skill.toLowerCase());
+                    const isMatched = userSkillsList.includes(skill.toLowerCase());
                     return (
                       <span 
                         key={idx} 

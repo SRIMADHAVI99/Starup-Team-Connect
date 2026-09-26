@@ -83,12 +83,7 @@ export default function Register({ initialRole = 'user', onRegisterSuccess, onSw
         setErrorMsg(errText || 'Registration failed. Please try again.');
       }
     } catch (err) {
-      console.warn('Backend server offline or unreachable, using local session fallback:', err);
-      const localUser = { id: Date.now(), ...payload };
-      setSuccessMsg('Account created successfully! Logging you in...');
-      setTimeout(() => {
-        onRegisterSuccess(localUser, role);
-      }, 700);
+      setErrorMsg('Unable to connect to the backend server. Please try again.');
     } finally {
       setIsLoading(false);
     }
