@@ -191,7 +191,7 @@ export default function App() {
     return () => window.removeEventListener('popstate', handlePopState);
   }, [currentUser?.id, currentRole]);
 
-  // Load startups & user applications / teams on mount or role/user change
+  // Live polling (every 3 seconds) for startups, applications, and teams for automatic real-time sync
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -199,7 +199,10 @@ export default function App() {
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
-            setStartups(data);
+            setStartups(prev => {
+              if (JSON.stringify(prev) !== JSON.stringify(data)) return data;
+              return prev;
+            });
             setStartupsError(null);
           }
         }
@@ -217,7 +220,10 @@ export default function App() {
           if (appRes.ok) {
             const appData = await appRes.json();
             if (Array.isArray(appData)) {
-              setApplications(appData);
+              setApplications(prev => {
+                if (JSON.stringify(prev) !== JSON.stringify(appData)) return appData;
+                return prev;
+              });
             }
           }
 
@@ -235,7 +241,12 @@ export default function App() {
                 const msgData = await msgRes.json();
                 activeTeam.messages = msgData;
               }
-              setTeam(activeTeam);
+              setTeam(prev => {
+                if (!prev || prev.id !== activeTeam.id || JSON.stringify(prev.members) !== JSON.stringify(activeTeam.members) || JSON.stringify(prev.messages) !== JSON.stringify(activeTeam.messages)) {
+                  return activeTeam;
+                }
+                return prev;
+              });
             }
           }
         } catch (e) {
@@ -243,7 +254,10 @@ export default function App() {
         }
       }
     };
+
     fetchData();
+    const interval = setInterval(fetchData, 3000);
+    return () => clearInterval(interval);
   }, [currentUser?.id, currentRole]);
 
   // Saved startups persistence per user
@@ -481,6 +495,7 @@ export default function App() {
             messages: [
               {
                 id: Date.now(),
+                senderId: currentUser?.id || 1,
                 senderName: targetFounderName,
                 senderRole: 'founder',
                 text: `Welcome to the ${targetStartupTitle} team! Excited to work together.`,
