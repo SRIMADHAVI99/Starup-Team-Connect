@@ -150,7 +150,7 @@ export default function CreateStartup({
       teamSize: teamSize.trim(),
       category: category.trim(),
       founderId: currentUser.id,
-      founderName: currentUser.name || 'Founder'
+      founderName: currentUser.name
     };
 
     try {
@@ -168,13 +168,7 @@ export default function CreateStartup({
         setErrorMsg(errorText || 'Unable to create startup. Please try again.');
       }
     } catch (err) {
-      console.warn('Backend server connecting, saving startup in session:', err);
-      const mockCreated = {
-        id: Date.now(),
-        ...payload,
-        createdAt: new Date().toISOString()
-      };
-      onStartupCreated(mockCreated);
+      setErrorMsg('Unable to connect to the server. Please try again.');
     } finally {
       setIsLoading(false);
     }

@@ -214,17 +214,14 @@ export default function TeamDashboard({
                 No messages in this chat channel yet. Send a message to start collaborating!
               </div>
             ) : (
-              messages.map((msg, idx) => {
-                // Determine ownership by matching user ID or sender name against current logged-in user
+              messages.map((msg) => {
+                // Requirement 7: Determine ownership ONLY by matching senderId with logged-in user ID
                 const isOwnMessage = Boolean(
-                  currentUser && (
-                    (msg?.senderId != null && currentUser?.id != null && String(msg.senderId) === String(currentUser.id)) ||
-                    (msg?.senderName && currentUser?.name && String(msg.senderName).trim().toLowerCase() === String(currentUser.name).trim().toLowerCase())
-                  )
+                  msg?.senderId != null && currentUser?.id != null && Number(msg.senderId) === Number(currentUser.id)
                 );
 
                 return (
-                  <div key={msg.id || `msg-${idx}`} className={`message-row ${isOwnMessage ? 'own-message own' : 'other-message other'}`}>
+                  <div key={msg.id} className={`message-row ${isOwnMessage ? 'own-message own' : 'other-message other'}`}>
                     <div className="message-bubble">
                       <div className="message-author">
                         {msg.senderName} &bull; <span style={{ opacity: 0.75, fontSize: '0.7rem' }}>{msg.timestamp || (msg.sentAt ? new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now')}</span>

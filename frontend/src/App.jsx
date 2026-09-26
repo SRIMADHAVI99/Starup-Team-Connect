@@ -335,14 +335,13 @@ export default function App() {
     setCurrentPage('startup-details');
   };
 
-  // Apply to Join Startup
+  // Apply to Join Startup (Requirement 1, 2, 3)
   const handleApplyToStartup = async (startup, selectedRole = 'Developer', note = '') => {
-    if (!currentUser) return;
+    if (!currentUser || !currentUser.id || !startup || !startup.id) return;
 
     // Check if user already applied (Requirement 11)
     const alreadyApplied = applications.some(
-      a => (a.startupId === startup.id || a.startup?.id === startup.id) &&
-        (a.userId === currentUser.id || a.userEmail === currentUser.email || a.user?.email === currentUser.email)
+      a => Number(a.startupId) === Number(startup.id) && Number(a.userId) === Number(currentUser.id)
     );
 
     if (alreadyApplied) {
@@ -350,47 +349,37 @@ export default function App() {
       return;
     }
 
-    const newApplication = {
-      id: Date.now(),
-      startupId: startup.id,
-      startupTitle: startup.title,
-      founderId: startup.founderId,
-      founderName: startup.founderName,
-      userId: currentUser.id,
-      userName: currentUser.name,
-      userEmail: currentUser.email,
-      appliedRole: selectedRole,
-      note: note,
-      appliedDate: new Date().toISOString(),
-      status: 'PENDING'
-    };
-
     try {
       const res = await fetch(`${API_BASE_URL}/api/applications`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: currentUser.id,
-          userName: currentUser.name || currentUser.email || 'Applicant',
-          userEmail: currentUser.email,
-          userSkills: currentUser.skills || '',
           startupId: startup.id,
-          startupTitle: startup.title,
           appliedRole: selectedRole,
           note: note
         })
       });
+
       if (res.ok) {
         const savedApp = await res.json();
         setApplications(prev => [savedApp, ...prev.filter(a => a.id !== savedApp.id)]);
         showModal('Application Submitted', 'Your application was submitted successfully! Track status in "My Applications".', 'success');
+
+        // Immediately re-fetch user's applications from backend (Requirement 3)
+        try {
+          const freshRes = await fetch(`${API_BASE_URL}/api/applications/user/${currentUser.id}`);
+          if (freshRes.ok) {
+            const freshApps = await freshRes.json();
+            if (Array.isArray(freshApps)) setApplications(freshApps);
+          }
+        } catch (e) {}
       } else {
-        setApplications(prev => [newApplication, ...prev]);
-        showModal('Application Submitted', 'Your application was submitted successfully! Track status in "My Applications".', 'success');
+        const errText = await res.text();
+        showModal('Application Failed', errText || 'Unable to submit your application. Please try again.', 'error');
       }
-    } catch {
-      setApplications(prev => [newApplication, ...prev]);
-      showModal('Application Submitted', 'Your application was submitted successfully! Track status in "My Applications".', 'success');
+    } catch (err) {
+      showModal('Application Failed', 'Unable to submit your application. Please try again.', 'error');
     }
   };
 
@@ -457,90 +446,76 @@ export default function App() {
     showModal('Startup Created', `Startup "${newStartup.title}" created successfully!`, 'success');
   };
 
-  // Founder Accepts Application -> Team Formation
+  // Founder Accepts Application -> Team Formation (Requirement 11)
   const handleAcceptApplication = async (appId) => {
-    let acceptedApp = null;
-
-    setApplications(prev => prev.map(app => {
-      if (app.id === appId) {
-        acceptedApp = { ...app, status: 'ACCEPTED' };
-        return acceptedApp;
-      }
-      return app;
-    }));
-
     try {
-      await fetch(`${API_BASE_URL}/api/applications/${appId}/accept`, {
+      const res = await fetch(`${API_BASE_URL}/api/applications/${appId}/accept`, {
         method: 'PUT'
       });
-    } catch (e) { }
 
-    if (acceptedApp) {
-      const targetStartupTitle = acceptedApp.startupTitle || acceptedApp.startup?.title || 'Startup Project';
-      const targetFounderName = acceptedApp.founderName || acceptedApp.startup?.founderName || currentUser?.name || 'Founder';
+      if (res.ok) {
+        const acceptedApp = await res.json();
+        setApplications(prev => prev.map(app => app.id === appId ? acceptedApp : app));
 
-      const newMember = {
-        userId: acceptedApp.userId || acceptedApp.user?.id || 1,
-        userName: acceptedApp.userName || acceptedApp.user?.name || 'Applicant',
-        role: acceptedApp.appliedRole || 'Developer',
-        skills: acceptedApp.userSkills || acceptedApp.user?.skills || 'Technical Skills'
-      };
-
-      setTeam(prevTeam => {
-        if (!prevTeam) {
-          return {
-            id: Date.now(),
-            startupTitle: targetStartupTitle,
-            founderName: targetFounderName,
-            status: 'Active',
-            members: [newMember],
-            messages: [
-              {
-                id: Date.now(),
-                senderId: currentUser?.id || 1,
-                senderName: targetFounderName,
-                senderRole: 'founder',
-                text: `Welcome to the ${targetStartupTitle} team! Excited to work together.`,
-                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        if (currentUser?.id) {
+          try {
+            const teamUrl = currentRole === 'founder'
+              ? `${API_BASE_URL}/api/teams/founder/${currentUser.id}`
+              : `${API_BASE_URL}/api/teams/user/${currentUser.id}`;
+            const teamRes = await fetch(teamUrl);
+            if (teamRes.ok) {
+              const teamData = await teamRes.json();
+              const activeTeam = Array.isArray(teamData) ? teamData[0] : teamData;
+              if (activeTeam && activeTeam.id) {
+                const msgRes = await fetch(`${API_BASE_URL}/api/teams/${activeTeam.id}/messages`);
+                if (msgRes.ok) {
+                  activeTeam.messages = await msgRes.json();
+                }
+                setTeam(activeTeam);
               }
-            ]
-          };
-        } else {
-          return {
-            ...prevTeam,
-            members: [...(prevTeam.members || []), newMember]
-          };
+            }
+          } catch (e) {}
         }
-      });
 
-      showModal('Application Accepted', `Application accepted! Team automatically formed for "${targetStartupTitle}". Check "My Team".`, 'success');
+        showModal('Application Accepted', `Application accepted! Team automatically formed for "${acceptedApp.startupTitle || 'Startup'}". Check "My Team".`, 'success');
+      } else {
+        const errText = await res.text();
+        showModal('Action Failed', errText || 'Unable to accept application. Please try again.', 'error');
+      }
+    } catch (err) {
+      showModal('Action Failed', 'Unable to connect to the server. Please try again.', 'error');
     }
   };
 
+  // Founder Rejects Application (Requirement 11)
   const handleRejectApplication = async (appId) => {
-    setApplications(prev => prev.map(app => {
-      if (app.id === appId) {
-        return { ...app, status: 'REJECTED' };
-      }
-      return app;
-    }));
-
     try {
-      await fetch(`${API_BASE_URL}/api/applications/${appId}/reject`, {
+      const res = await fetch(`${API_BASE_URL}/api/applications/${appId}/reject`, {
         method: 'PUT'
       });
-    } catch (e) { }
+
+      if (res.ok) {
+        const rejectedApp = await res.json();
+        setApplications(prev => prev.map(app => app.id === appId ? rejectedApp : app));
+        showModal('Application Rejected', 'Application status updated to Rejected.', 'info');
+      } else {
+        const errText = await res.text();
+        showModal('Action Failed', errText || 'Unable to reject application. Please try again.', 'error');
+      }
+    } catch (err) {
+      showModal('Action Failed', 'Unable to connect to the server. Please try again.', 'error');
+    }
   };
 
-  // Team Chat Post Message (Requirement 7)
+  // Team Chat Post Message (Requirement 7 & 8)
   const handleSendMessage = async (text) => {
-    if (!team || !team.id || !currentUser) return false;
+    if (!team || !team.id || !currentUser || !currentUser.id) return false;
 
     const payload = {
       senderId: currentUser.id,
-      senderName: currentUser.name || (currentRole === 'founder' ? 'Founder' : 'Contributor'),
+      senderName: currentUser.name,
       senderRole: currentRole,
-      text: text
+      text: text.trim()
     };
 
     try {
@@ -551,10 +526,10 @@ export default function App() {
       });
       if (res.ok) {
         const savedMsg = await res.json();
-        setTeam(prev => ({
+        setTeam(prev => prev ? {
           ...prev,
-          messages: [...(prev?.messages || []), savedMsg]
-        }));
+          messages: [...(prev.messages || []).filter(m => m.id !== savedMsg.id), savedMsg]
+        } : prev);
         return true;
       } else {
         showModal('Message Failed', 'Unable to send message to team chat.', 'error');
@@ -572,17 +547,11 @@ export default function App() {
   };
 
   const userApplications = applications.filter(a => {
-    if (!currentUser) return false;
-    const matchId = a.userId != null && currentUser.id != null && String(a.userId) === String(currentUser.id);
-    const matchEmail = a.userEmail && currentUser.email && String(a.userEmail).trim().toLowerCase() === String(currentUser.email).trim().toLowerCase();
-    return matchId || matchEmail;
+    return currentUser?.id != null && a?.userId != null && Number(a.userId) === Number(currentUser.id);
   });
 
   const founderStartups = startups.filter(s => {
-    if (!currentUser) return false;
-    const matchId = s.founderId != null && currentUser.id != null && String(s.founderId) === String(currentUser.id);
-    const matchName = s.founderName && currentUser.name && String(s.founderName).trim().toLowerCase() === String(currentUser.name).trim().toLowerCase();
-    return matchId || matchName;
+    return currentUser?.id != null && s?.founderId != null && Number(s.founderId) === Number(currentUser.id);
   });
 
   if (currentPage === 'login') {

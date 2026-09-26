@@ -27,17 +27,11 @@ public class ApplicationController {
     public ResponseEntity<?> applyToStartup(@RequestBody Map<String, Object> body) {
         try {
             Long userId = body.get("userId") != null ? Long.valueOf(body.get("userId").toString()) : null;
-            String userName = body.get("userName") != null ? body.get("userName").toString() : null;
-            String userEmail = body.get("userEmail") != null ? body.get("userEmail").toString() : null;
-            String userSkills = body.get("userSkills") != null ? body.get("userSkills").toString() : null;
-
             Long startupId = body.get("startupId") != null ? Long.valueOf(body.get("startupId").toString()) : null;
-            String startupTitle = body.get("startupTitle") != null ? body.get("startupTitle").toString() : null;
-
             String role = body.get("appliedRole") != null ? body.get("appliedRole").toString() : "Team Member";
             String note = body.get("note") != null ? body.get("note").toString() : "";
 
-            Application application = applicationService.applyToStartup(userId, userName, userEmail, userSkills, startupId, startupTitle, role, note);
+            Application application = applicationService.applyToStartup(userId, startupId, role, note);
             return ResponseEntity.ok(application);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
