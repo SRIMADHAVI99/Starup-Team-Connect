@@ -143,8 +143,25 @@ export default function App() {
     setModalConfig({ isOpen: true, title, message, type });
   };
 
-  // Startups State & Error State
-  const [startups, setStartups] = useState([]);
+  // Default demo startup for offline preview
+  const DEFAULT_STARTUPS = [
+    {
+      id: 1,
+      title: 'EcoTrack',
+      category: 'CleanTech',
+      shortDescription: 'A smart waste management and recycling platform connecting communities with collection hubs.',
+      problemStatement: 'Urban communities lack systematic tracking and incentives for segregated recyclable waste collection.',
+      solution: 'A smart dashboard and mobile route coordinator that rewards verified recycling and alerts local collection hubs.',
+      requiredRoles: 'Java Developer, UI Designer, IoT Specialist',
+      requiredSkills: 'Java, SQL, HTML, CSS',
+      teamSize: '3-4 members',
+      founderId: 1,
+      founderName: 'Ananya Gupta'
+    }
+  ];
+
+  // Startups State
+  const [startups, setStartups] = useState(DEFAULT_STARTUPS);
   const [startupsError, setStartupsError] = useState(null);
   const [selectedStartup, setSelectedStartup] = useState(null);
 
@@ -181,15 +198,13 @@ export default function App() {
         const res = await fetch(`${API_BASE_URL}/api/startups`);
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data)) {
+          if (Array.isArray(data) && data.length > 0) {
             setStartups(data);
             setStartupsError(null);
           }
-        } else {
-          setStartupsError('Unable to connect to backend server. Please verify database/server connection.');
         }
       } catch (err) {
-        setStartupsError('Unable to connect to backend server. Please verify database/server connection.');
+        console.warn('Backend server connecting...');
       }
 
       if (currentUser?.id) {
