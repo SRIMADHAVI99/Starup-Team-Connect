@@ -32,6 +32,9 @@ public class Founder {
 
     private String interests;
 
+    @Transient
+    private String token;
+
     public Founder() {
     }
 
@@ -106,4 +109,13 @@ public class Founder {
     public void setInterests(String interests) {
         this.interests = interests;
     }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
 }
+

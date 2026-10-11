@@ -78,6 +78,37 @@ public class TeamService {
     }
 
     /**
+     * Requirement 3: Check permissions on the backend for private team APIs.
+     * Verify caller is either the assigned founder or an accepted member of the team.
+     */
+    public Team verifyTeamAccess(Long teamId, Long callerId, String callerRole) {
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new IllegalArgumentException("Team not found with ID: " + teamId));
+
+        if (callerId == null) {
+            throw new SecurityException("Unauthorized: Caller identity is required.");
+        }
+
+        boolean authorized = false;
+        if (callerRole != null && callerRole.equalsIgnoreCase("founder")) {
+            authorized = team.getFounderId().equals(callerId);
+        } else if (callerRole != null && (callerRole.equalsIgnoreCase("user") || callerRole.equalsIgnoreCase("member"))) {
+            authorized = teamMemberRepository.findByTeamId(teamId).stream()
+                    .anyMatch(m -> m.getUserId().equals(callerId));
+        } else {
+            authorized = team.getFounderId().equals(callerId) ||
+                    teamMemberRepository.findByTeamId(teamId).stream()
+                            .anyMatch(m -> m.getUserId().equals(callerId));
+        }
+
+        if (!authorized) {
+            throw new SecurityException("Unauthorized: You do not have permission to access this team.");
+        }
+
+        return team;
+    }
+
+    /**
      * Requirement: Validate that the sender exists and is authorized for the team before saving messages.
      */
     public TeamMessage postMessage(Long teamId, Long senderId, String senderName, String senderRole, String text) {

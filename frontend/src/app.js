@@ -86,6 +86,9 @@ class AppState {
     const savedUserStr = localStorage.getItem('stc_user');
     try {
       this.currentUser = savedUserStr ? JSON.parse(savedUserStr) : null;
+      if (this.currentUser && !this.currentUser.token) {
+        this.currentUser.token = localStorage.getItem('stc_token') || '';
+      }
     } catch {
       this.currentUser = null;
     }
@@ -144,6 +147,15 @@ class AppState {
 }
 
 const state = new AppState();
+
+function getAuthHeaders(extra = {}) {
+  const token = state.currentUser?.token || localStorage.getItem('stc_token');
+  const headers = { ...extra };
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+}
 
 /**
  * Main App Controller
@@ -218,6 +230,9 @@ function toggleTheme() {
 function handleLoginSuccess(userData, role) {
   state.currentUser = userData;
   state.currentRole = role;
+  if (userData?.token) {
+    localStorage.setItem('stc_token', userData.token);
+  }
   localStorage.setItem('stc_user', JSON.stringify(userData));
   localStorage.setItem('stc_role', role);
 
@@ -246,6 +261,7 @@ function handleLogout() {
   state.selectedTeamId = null;
 
   localStorage.removeItem('stc_user');
+  localStorage.removeItem('stc_token');
   localStorage.removeItem('stc_role');
   localStorage.removeItem('stc_page');
   localStorage.removeItem('stc_page_user_id');
@@ -288,7 +304,7 @@ async function fetchSyncData() {
         ? `${API_BASE_URL}/api/applications/founder/${state.currentUser.id}`
         : `${API_BASE_URL}/api/applications/user/${state.currentUser.id}`;
       
-      const appRes = await fetch(appUrl);
+      const appRes = await fetch(appUrl, { headers: getAuthHeaders() });
       if (appRes.ok) {
         const appData = await appRes.json();
         if (Array.isArray(appData)) {
@@ -306,9 +322,9 @@ async function fetchSyncData() {
         ? `${API_BASE_URL}/api/teams/founder/${state.currentUser.id}`
         : `${API_BASE_URL}/api/teams/user/${state.currentUser.id}/all`;
       
-      let teamRes = await fetch(teamUrl);
+      let teamRes = await fetch(teamUrl, { headers: getAuthHeaders() });
       if (!teamRes.ok && state.currentRole !== 'founder') {
-        teamRes = await fetch(`${API_BASE_URL}/api/teams/user/${state.currentUser.id}`);
+        teamRes = await fetch(`${API_BASE_URL}/api/teams/user/${state.currentUser.id}`, { headers: getAuthHeaders() });
       }
 
       if (teamRes.ok) {
@@ -329,11 +345,8 @@ async function fetchSyncData() {
         if (activeTeam && activeTeam.id) {
           // If user is currently on the 'team' page, teamDashboard.js owns live 2s message polling
           if (state.currentPage !== 'team') {
-            const msgRes = await fetch(`${API_BASE_URL}/api/teams/${activeTeam.id}/messages?userId=${state.currentUser.id}&role=${state.currentRole}`, {
-              headers: {
-                'X-User-Id': String(state.currentUser.id),
-                'X-User-Role': String(state.currentRole)
-              }
+            const msgRes = await fetch(`${API_BASE_URL}/api/teams/${activeTeam.id}/messages`, {
+              headers: getAuthHeaders()
             });
             if (msgRes.ok) {
               activeTeam.messages = await msgRes.json();
@@ -382,7 +395,9 @@ async function fetchSavedStartups() {
 
   const userKey = `stc_saved_user_${state.currentUser.id}`;
   try {
-    const res = await fetch(`${API_BASE_URL}/api/saved-startups/user/${state.currentUser.id}`);
+    const res = await fetch(`${API_BASE_URL}/api/saved-startups/user/${state.currentUser.id}`, {
+      headers: getAuthHeaders()
+    });
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data)) {
@@ -419,7 +434,7 @@ async function handleApplyToStartup(startup, selectedRole = 'Developer', note = 
   try {
     const res = await fetch(`${API_BASE_URL}/api/applications`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
       body: JSON.stringify({
         userId: state.currentUser.id,
         startupId: startup.id,
@@ -434,7 +449,9 @@ async function handleApplyToStartup(startup, selectedRole = 'Developer', note = 
       showModal('Application Submitted', 'Your application was submitted successfully! Track status in "My Applications".', 'success');
 
       try {
-        const freshRes = await fetch(`${API_BASE_URL}/api/applications/user/${state.currentUser.id}`);
+        const freshRes = await fetch(`${API_BASE_URL}/api/applications/user/${state.currentUser.id}`, {
+          headers: getAuthHeaders()
+        });
         if (freshRes.ok) {
           const freshApps = await freshRes.json();
           if (Array.isArray(freshApps)) state.applications = freshApps;
@@ -513,14 +530,11 @@ async function handleStartupCreated(newStartup) {
 
 async function handleAcceptApplication(appId) {
   try {
-    const founderId = state.currentUser?.id;
-    const res = await fetch(`${API_BASE_URL}/api/applications/${appId}/accept?founderId=${founderId}`, {
+    const res = await fetch(`${API_BASE_URL}/api/applications/${appId}/accept`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Founder-Id': String(founderId || '')
-      },
-      body: JSON.stringify({ founderId: founderId })
+      headers: getAuthHeaders({
+        'Content-Type': 'application/json'
+      })
     });
 
     if (res.ok) {
@@ -532,7 +546,7 @@ async function handleAcceptApplication(appId) {
           const teamUrl = state.currentRole === 'founder'
             ? `${API_BASE_URL}/api/teams/founder/${state.currentUser.id}`
             : `${API_BASE_URL}/api/teams/user/${state.currentUser.id}/all`;
-          const teamRes = await fetch(teamUrl);
+          const teamRes = await fetch(teamUrl, { headers: getAuthHeaders() });
           if (teamRes.ok) {
             const raw = await teamRes.json();
             const list = Array.isArray(raw) ? raw : (raw ? [raw] : []);
@@ -541,11 +555,8 @@ async function handleAcceptApplication(appId) {
             if (activeTeam && activeTeam.id) {
               state.selectedTeamId = activeTeam.id;
               localStorage.setItem('stc_selected_team_id', String(activeTeam.id));
-              const msgRes = await fetch(`${API_BASE_URL}/api/teams/${activeTeam.id}/messages?userId=${state.currentUser.id}&role=${state.currentRole}`, {
-                headers: {
-                  'X-User-Id': String(state.currentUser.id),
-                  'X-User-Role': String(state.currentRole)
-                }
+              const msgRes = await fetch(`${API_BASE_URL}/api/teams/${activeTeam.id}/messages`, {
+                headers: getAuthHeaders()
               });
               if (msgRes.ok) {
                 activeTeam.messages = await msgRes.json();
@@ -577,14 +588,11 @@ async function handleAcceptApplication(appId) {
 
 async function handleRejectApplication(appId) {
   try {
-    const founderId = state.currentUser?.id;
-    const res = await fetch(`${API_BASE_URL}/api/applications/${appId}/reject?founderId=${founderId}`, {
+    const res = await fetch(`${API_BASE_URL}/api/applications/${appId}/reject`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Founder-Id': String(founderId || '')
-      },
-      body: JSON.stringify({ founderId: founderId })
+      headers: getAuthHeaders({
+        'Content-Type': 'application/json'
+      })
     });
 
     if (res.ok) {
@@ -612,20 +620,15 @@ async function handleSendMessage(text) {
   if (!state.team || !state.team.id || !state.currentUser || !state.currentUser.id) return false;
 
   const payload = {
-    senderId: state.currentUser.id,
-    senderName: state.currentUser.name || (state.currentRole === 'founder' ? 'Founder' : 'Team Member'),
-    senderRole: state.currentRole,
     text: text.trim()
   };
 
   try {
     const res = await fetch(`${API_BASE_URL}/api/teams/${state.team.id}/messages`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-User-Id': String(state.currentUser.id),
-        'X-User-Role': String(state.currentRole)
-      },
+      headers: getAuthHeaders({
+        'Content-Type': 'application/json'
+      }),
       body: JSON.stringify(payload)
     });
 

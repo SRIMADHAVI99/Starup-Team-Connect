@@ -315,9 +315,13 @@ export function initCreateStartupEvents({
       };
 
       try {
+        const token = currentUser?.token || localStorage.getItem('stc_token');
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
         const res = await fetch(`${apiBaseUrl}/api/startups`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify(payload)
         });
 

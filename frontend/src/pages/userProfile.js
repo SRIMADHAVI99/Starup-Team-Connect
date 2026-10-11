@@ -158,9 +158,12 @@ export function initUserProfileEvents({ currentUser, onUpdateProfile, apiBaseUrl
 
       if (currentUser?.id) {
         try {
+          const token = currentUser?.token || localStorage.getItem('stc_token');
+          const headers = { 'Content-Type': 'application/json' };
+          if (token) headers['Authorization'] = `Bearer ${token}`;
           const res = await fetch(`${apiBaseUrl}/api/users/${currentUser.id}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers,
             body: JSON.stringify(updated)
           });
           if (res.ok) {
