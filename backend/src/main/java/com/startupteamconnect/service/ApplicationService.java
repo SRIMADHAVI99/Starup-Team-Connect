@@ -100,7 +100,7 @@ public class ApplicationService {
         Application updatedApp = applicationRepository.save(app);
 
         // Check if team already exists for this startup
-        Team team = teamRepository.findByStartupId(app.getStartupId())
+        Team team = teamRepository.findFirstByStartupIdOrderByIdAsc(app.getStartupId())
                 .orElseGet(() -> {
                     Startup startup = startupRepository.findById(app.getStartupId()).orElse(null);
                     String founderName = startup != null ? startup.getFounderName() : "Founder";

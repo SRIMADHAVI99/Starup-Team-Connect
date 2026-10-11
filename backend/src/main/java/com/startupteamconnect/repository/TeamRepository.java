@@ -10,5 +10,7 @@ import java.util.Optional;
 @Repository
 public interface TeamRepository extends JpaRepository<Team, Long> {
     Optional<Team> findByStartupId(Long startupId);
+    Optional<Team> findFirstByStartupIdOrderByIdAsc(Long startupId);
+    List<Team> findAllByStartupIdOrderByIdAsc(Long startupId);
     List<Team> findByFounderId(Long founderId);
 }
