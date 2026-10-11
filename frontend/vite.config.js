@@ -1,11 +1,9 @@
-import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vite';
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [],
   server: {
-    host: true, // Listen on all local IP addresses for mobile testing
     port: 5173
   }
-})
+});

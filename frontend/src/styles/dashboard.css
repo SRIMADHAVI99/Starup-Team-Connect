@@ -339,6 +339,29 @@
   color: #2563EB !important;
 }
 
+.message-row.own-message .message-text,
+.message-row.own .message-text {
+  color: #FFFFFF !important;
+}
+
+.message-row.other-message .message-text,
+.message-row.other .message-text {
+  color: #0F172A !important;
+}
+
+[data-theme="dark"] .message-row.other-message .message-bubble,
+[data-theme="dark"] .message-row.other .message-bubble {
+  background: #1E293B !important;
+  border: 1px solid #334155 !important;
+  color: #F8FAFC !important;
+}
+
+[data-theme="dark"] .message-row.other-message .message-text,
+[data-theme="dark"] .message-row.other .message-text {
+  color: #F8FAFC !important;
+}
+
+
 /* Backward compatibility aliases */
 .team-msg {
   max-width: 78%;

@@ -1,16 +1,38 @@
-# React + Vite
+# Startup Team Connect - Vanilla Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+A responsive, high-performance web client built with **pure HTML5, CSS3, and Vanilla JavaScript (ES modules)** bundled with Vite.
 
-Currently, two official plugins are available:
+## Tech Stack
+- **Structure**: Semantic HTML5 templates & dynamically mounted views
+- **Styles**: Custom Vanilla CSS design system (blue-and-white theme, dark/light mode tokens)
+- **Logic**: Vanilla ES Modules (`app.js`, `main.js`, modular page and component scripts)
+- **API Communication**: Native browser `fetch()` API
+- **Live Sync**: Dedicated 2-second auto-polling loop for real-time team collaboration
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Directory Structure
+```
+frontend/
+├── index.html            # Main HTML entry point
+├── package.json          # Vanilla scripts and Vite build dependencies
+├── vite.config.js        # Standard Vite configuration
+└── src/
+    ├── main.js           # App bootstrapper
+    ├── app.js            # Router, state management & API polling
+    ├── config/           # API endpoints configuration
+    ├── components/       # UI components (navbar, logo, modal, chatbot, cards)
+    ├── pages/            # View controllers (dashboard, team, profile, etc.)
+    └── styles/           # CSS design tokens, components, and layout styling
+```
 
-## React Compiler
+## Running the Frontend
+```bash
+npm install
+npm run dev
+```
+Runs at `http://localhost:5173`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+## Production Build
+```bash
+npm run build
+```
+Creates production-optimized static assets in `dist/`.

@@ -7,8 +7,11 @@ import com.startupteamconnect.repository.TeamMemberRepository;
 import com.startupteamconnect.repository.TeamMessageRepository;
 import com.startupteamconnect.repository.TeamRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -26,6 +29,10 @@ public class TeamService {
         this.teamMessageRepository = teamMessageRepository;
     }
 
+    public Optional<Team> getTeamById(Long teamId) {
+        return teamRepository.findById(teamId);
+    }
+
     public Optional<Team> getTeamByStartup(Long startupId) {
         return teamRepository.findByStartupId(startupId);
     }
@@ -40,6 +47,20 @@ public class TeamService {
             return teamRepository.findById(memberships.get(0).getTeam().getId());
         }
         return Optional.empty();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Team> getTeamsForUser(Long userId) {
+        List<TeamMember> memberships = teamMemberRepository.findByUserId(userId);
+        if (memberships.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<Long> teamIds = memberships.stream()
+                .map(m -> m.getTeam() != null ? m.getTeam().getId() : null)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+        return teamRepository.findAllById(teamIds);
     }
 
     public List<TeamMember> getTeamMembers(Long teamId) {

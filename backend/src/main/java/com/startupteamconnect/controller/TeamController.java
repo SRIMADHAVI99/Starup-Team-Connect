@@ -21,6 +21,13 @@ public class TeamController {
         this.teamService = teamService;
     }
 
+    @GetMapping("/{teamId}")
+    public ResponseEntity<?> getTeamById(@PathVariable Long teamId) {
+        return teamService.getTeamById(teamId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
     /**
      * Requirement 13: View team for User
      */
@@ -29,6 +36,11 @@ public class TeamController {
         return teamService.getTeamForUser(userId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/user/{userId}/all")
+    public List<Team> getTeamsForUser(@PathVariable Long userId) {
+        return teamService.getTeamsForUser(userId);
     }
 
     /**

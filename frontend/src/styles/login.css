@@ -8,7 +8,14 @@
   align-items: center;
   justify-content: center;
   background: var(--bg-primary);
-  padding: 32px 16px;
+  padding: 40px 16px;
+  box-sizing: border-box;
+}
+
+@media (max-height: 750px) {
+  .auth-wrapper {
+    align-items: flex-start;
+  }
 }
 
 .auth-card {
