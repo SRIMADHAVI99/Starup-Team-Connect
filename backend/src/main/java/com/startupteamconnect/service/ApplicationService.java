@@ -85,9 +85,16 @@ public class ApplicationService {
      * 2. Automatically form or join a TEAM relationship in MySQL.
      */
     @Transactional
-    public Application acceptApplication(Long applicationId) {
+    public Application acceptApplication(Long applicationId, Long founderId) {
         Application app = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new RuntimeException("Application not found"));
+
+        if (founderId == null) {
+            throw new SecurityException("Unauthorized: Founder ID is required to accept this application.");
+        }
+        if (!founderId.equals(app.getFounderId())) {
+            throw new SecurityException("Unauthorized: Only the founder who owns this startup may accept this application.");
+        }
 
         app.setStatus("ACCEPTED");
         Application updatedApp = applicationRepository.save(app);
@@ -125,10 +132,30 @@ public class ApplicationService {
         return updatedApp;
     }
 
+    public Application acceptApplication(Long applicationId) {
+        Application app = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new RuntimeException("Application not found"));
+        return acceptApplication(applicationId, app.getFounderId());
+    }
+
+    public Application rejectApplication(Long applicationId, Long founderId) {
+        Application app = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new RuntimeException("Application not found"));
+
+        if (founderId == null) {
+            throw new SecurityException("Unauthorized: Founder ID is required to reject this application.");
+        }
+        if (!founderId.equals(app.getFounderId())) {
+            throw new SecurityException("Unauthorized: Only the founder who owns this startup may reject this application.");
+        }
+
+        app.setStatus("REJECTED");
+        return applicationRepository.save(app);
+    }
+
     public Application rejectApplication(Long applicationId) {
         Application app = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new RuntimeException("Application not found"));
-        app.setStatus("REJECTED");
-        return applicationRepository.save(app);
+        return rejectApplication(applicationId, app.getFounderId());
     }
 }

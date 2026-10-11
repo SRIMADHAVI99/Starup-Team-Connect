@@ -51,28 +51,54 @@ public class ApplicationController {
     /**
      * Requirement 12 & 13: FOUNDER APPLICATION ACCEPTANCE & TEAM FORMATION
      * PUT /api/applications/{id}/accept
+     * Only the founder who owns the startup may accept its applications.
      */
     @PutMapping("/{id}/accept")
-    public ResponseEntity<?> acceptApplication(@PathVariable Long id) {
+    public ResponseEntity<?> acceptApplication(@PathVariable Long id,
+                                               @RequestParam(required = false) Long founderId,
+                                               @RequestHeader(value = "X-Founder-Id", required = false) Long headerFounderId,
+                                               @RequestBody(required = false) Map<String, Object> body) {
         try {
-            Application accepted = applicationService.acceptApplication(id);
+            Long effectiveFounderId = founderId;
+            if (effectiveFounderId == null && headerFounderId != null) {
+                effectiveFounderId = headerFounderId;
+            }
+            if (effectiveFounderId == null && body != null && body.get("founderId") != null) {
+                effectiveFounderId = Long.valueOf(body.get("founderId").toString());
+            }
+            Application accepted = applicationService.acceptApplication(id, effectiveFounderId);
             return ResponseEntity.ok(accepted);
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
     /**
      * Requirement 12: FOUNDER APPLICATION REJECTION
      * PUT /api/applications/{id}/reject
+     * Only the founder who owns the startup may reject its applications.
      */
     @PutMapping("/{id}/reject")
-    public ResponseEntity<?> rejectApplication(@PathVariable Long id) {
+    public ResponseEntity<?> rejectApplication(@PathVariable Long id,
+                                               @RequestParam(required = false) Long founderId,
+                                               @RequestHeader(value = "X-Founder-Id", required = false) Long headerFounderId,
+                                               @RequestBody(required = false) Map<String, Object> body) {
         try {
-            Application rejected = applicationService.rejectApplication(id);
+            Long effectiveFounderId = founderId;
+            if (effectiveFounderId == null && headerFounderId != null) {
+                effectiveFounderId = headerFounderId;
+            }
+            if (effectiveFounderId == null && body != null && body.get("founderId") != null) {
+                effectiveFounderId = Long.valueOf(body.get("founderId").toString());
+            }
+            Application rejected = applicationService.rejectApplication(id, effectiveFounderId);
             return ResponseEntity.ok(rejected);
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 }

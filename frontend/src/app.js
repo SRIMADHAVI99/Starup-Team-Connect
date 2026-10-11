@@ -329,7 +329,12 @@ async function fetchSyncData() {
         if (activeTeam && activeTeam.id) {
           // If user is currently on the 'team' page, teamDashboard.js owns live 2s message polling
           if (state.currentPage !== 'team') {
-            const msgRes = await fetch(`${API_BASE_URL}/api/teams/${activeTeam.id}/messages`);
+            const msgRes = await fetch(`${API_BASE_URL}/api/teams/${activeTeam.id}/messages?userId=${state.currentUser.id}&role=${state.currentRole}`, {
+              headers: {
+                'X-User-Id': String(state.currentUser.id),
+                'X-User-Role': String(state.currentRole)
+              }
+            });
             if (msgRes.ok) {
               activeTeam.messages = await msgRes.json();
             }
@@ -508,8 +513,14 @@ async function handleStartupCreated(newStartup) {
 
 async function handleAcceptApplication(appId) {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/applications/${appId}/accept`, {
-      method: 'PUT'
+    const founderId = state.currentUser?.id;
+    const res = await fetch(`${API_BASE_URL}/api/applications/${appId}/accept?founderId=${founderId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Founder-Id': String(founderId || '')
+      },
+      body: JSON.stringify({ founderId: founderId })
     });
 
     if (res.ok) {
@@ -530,7 +541,12 @@ async function handleAcceptApplication(appId) {
             if (activeTeam && activeTeam.id) {
               state.selectedTeamId = activeTeam.id;
               localStorage.setItem('stc_selected_team_id', String(activeTeam.id));
-              const msgRes = await fetch(`${API_BASE_URL}/api/teams/${activeTeam.id}/messages`);
+              const msgRes = await fetch(`${API_BASE_URL}/api/teams/${activeTeam.id}/messages?userId=${state.currentUser.id}&role=${state.currentRole}`, {
+                headers: {
+                  'X-User-Id': String(state.currentUser.id),
+                  'X-User-Role': String(state.currentRole)
+                }
+              });
               if (msgRes.ok) {
                 activeTeam.messages = await msgRes.json();
               }
@@ -544,8 +560,15 @@ async function handleAcceptApplication(appId) {
       showModal('Application Accepted', `Application accepted! Team automatically formed for "${acceptedApp.startupTitle || 'Startup'}". Check "My Team".`, 'success');
       renderActivePageOnly();
     } else {
-      const errText = await res.text();
-      showModal('Action Failed', errText || 'Unable to accept application. Please try again.', 'error');
+      let errMsg = 'Unable to accept application. Please try again.';
+      try {
+        const errObj = await res.json();
+        if (errObj && errObj.error) errMsg = errObj.error;
+      } catch {
+        const errText = await res.text();
+        if (errText) errMsg = errText;
+      }
+      showModal('Action Failed', errMsg, 'error');
     }
   } catch (err) {
     showModal('Action Failed', 'Unable to connect to the server. Please try again.', 'error');
@@ -554,8 +577,14 @@ async function handleAcceptApplication(appId) {
 
 async function handleRejectApplication(appId) {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/applications/${appId}/reject`, {
-      method: 'PUT'
+    const founderId = state.currentUser?.id;
+    const res = await fetch(`${API_BASE_URL}/api/applications/${appId}/reject?founderId=${founderId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Founder-Id': String(founderId || '')
+      },
+      body: JSON.stringify({ founderId: founderId })
     });
 
     if (res.ok) {
@@ -564,8 +593,15 @@ async function handleRejectApplication(appId) {
       showModal('Application Rejected', 'Application status updated to Rejected.', 'info');
       renderActivePageOnly();
     } else {
-      const errText = await res.text();
-      showModal('Action Failed', errText || 'Unable to reject application. Please try again.', 'error');
+      let errMsg = 'Unable to reject application. Please try again.';
+      try {
+        const errObj = await res.json();
+        if (errObj && errObj.error) errMsg = errObj.error;
+      } catch {
+        const errText = await res.text();
+        if (errText) errMsg = errText;
+      }
+      showModal('Action Failed', errMsg, 'error');
     }
   } catch (err) {
     showModal('Action Failed', 'Unable to connect to the server. Please try again.', 'error');
@@ -585,7 +621,11 @@ async function handleSendMessage(text) {
   try {
     const res = await fetch(`${API_BASE_URL}/api/teams/${state.team.id}/messages`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': String(state.currentUser.id),
+        'X-User-Role': String(state.currentRole)
+      },
       body: JSON.stringify(payload)
     });
 
@@ -597,7 +637,15 @@ async function handleSendMessage(text) {
       localStorage.setItem('stc_team', JSON.stringify(state.team));
       return savedMsg;
     } else {
-      showModal('Message Failed', 'Unable to send message to team chat.', 'error');
+      let errMsg = 'Unable to send message to team chat.';
+      try {
+        const errObj = await res.json();
+        if (errObj && errObj.error) errMsg = errObj.error;
+      } catch {
+        const errText = await res.text();
+        if (errText) errMsg = errText;
+      }
+      showModal('Message Failed', errMsg, 'error');
       return false;
     }
   } catch (err) {

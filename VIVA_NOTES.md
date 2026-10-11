@@ -2,7 +2,7 @@
 
 > **Semester Project:** 3rd Year CSE  
 > **Topic:** Startup Team Connect (A Collaborative Platform Connecting Founders with Skilled Talent)  
-> **Tech Stack:** React (Vite + JavaScript) + Java Spring Boot (v3.3.4) + MySQL 8.0  
+> **Tech Stack:** Plain HTML5, CSS3, Vanilla JavaScript (ES modules) + Java Spring Boot (v3.3.4) + File-based H2 Database (MySQL compatibility mode)  
 
 ---
 

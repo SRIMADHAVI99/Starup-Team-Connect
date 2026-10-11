@@ -57,25 +57,49 @@ public class TeamController {
     }
 
     /**
-     * Requirement 20: SIMPLE TEAM CHAT
+     * Requirement 20: SECURED TEAM CHAT
+     * Validate that sender exists and is authorized for the team before saving.
      */
     @PostMapping("/{teamId}/messages")
-    public ResponseEntity<?> postMessage(@PathVariable Long teamId, @RequestBody Map<String, Object> body) {
+    public ResponseEntity<?> postMessage(@PathVariable Long teamId,
+                                         @RequestBody Map<String, Object> body,
+                                         @RequestHeader(value = "X-User-Id", required = false) Long headerUserId,
+                                         @RequestHeader(value = "X-User-Role", required = false) String headerUserRole) {
         try {
-            Long senderId = Long.valueOf(body.get("senderId").toString());
-            String senderName = body.get("senderName").toString();
-            String senderRole = body.get("senderRole").toString();
-            String text = body.get("text").toString();
+            Long senderId = body.get("senderId") != null ? Long.valueOf(body.get("senderId").toString()) : headerUserId;
+            String senderName = body.get("senderName") != null ? body.get("senderName").toString() : "";
+            String senderRole = body.get("senderRole") != null ? body.get("senderRole").toString() : headerUserRole;
+            String text = body.get("text") != null ? body.get("text").toString() : "";
 
             TeamMessage msg = teamService.postMessage(teamId, senderId, senderName, senderRole, text);
             return ResponseEntity.ok(msg);
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
+    /**
+     * Check team membership before returning private team messages.
+     */
     @GetMapping("/{teamId}/messages")
-    public List<TeamMessage> getTeamMessages(@PathVariable Long teamId) {
-        return teamService.getTeamMessages(teamId);
+    public ResponseEntity<?> getTeamMessages(@PathVariable Long teamId,
+                                             @RequestParam(required = false) Long userId,
+                                             @RequestParam(required = false) String role,
+                                             @RequestHeader(value = "X-User-Id", required = false) Long headerUserId,
+                                             @RequestHeader(value = "X-User-Role", required = false) String headerUserRole) {
+        Long callerId = userId != null ? userId : headerUserId;
+        String callerRole = role != null ? role : headerUserRole;
+        try {
+            List<TeamMessage> msgs = teamService.getTeamMessages(teamId, callerId, callerRole);
+            return ResponseEntity.ok(msgs);
+        } catch (SecurityException e) {
+            return ResponseEntity.status(403).body(Map.of("error", e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 }

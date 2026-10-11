@@ -3,10 +3,12 @@
  * Displays team rosters, objectives, and real-time auto-refreshing chat.
  * CRITICAL REQUIREMENTS:
  * 1. Messages sent by Founder appear automatically on User's chat, and vice versa, without refreshing.
- * 2. Fetch new messages every 2 seconds (2000ms).
- * 3. Both users view the same team's chat with optional workspace switcher if multiple teams exist.
- * 4. Own messages strictly on the right in blue (#2563EB); other members' messages on the left in light blue (#EFF6FF).
- * 5. Prevent duplicate messages and preserve chat history across page refresh.
+ * 2. Fetch immediately when chat opens and poll strictly every 2 seconds (2000ms).
+ * 3. Fix stale message comparisons; prevent overlapping requests; prevent duplicate messages.
+ * 4. Preserve existing messages on fetch errors.
+ * 5. Clean up polling and abort inflight requests when leaving the page.
+ * 6. Both users view the same team's chat with workspace switcher when multiple teams exist.
+ * 7. Own messages strictly on the right in blue (#2563EB); other members' messages on the left in light blue (#EFF6FF), using sender IDs only.
  */
 
 function deduplicateMessages(messages = []) {
@@ -206,7 +208,7 @@ export function renderTeamDashboardPage({
  * Renders message bubbles with strict alignment:
  * Current logged-in user -> own-message (RIGHT-aligned, Blue background #2563EB, White text)
  * Other team members -> other-message (LEFT-aligned, Light Blue #EFF6FF, Dark text #0F172A)
- * Deduplicated by ID.
+ * Strictly using sender IDs only.
  */
 export function renderMessagesHtml(messages = [], currentUser) {
   const deduped = deduplicateMessages(messages);
@@ -221,6 +223,7 @@ export function renderMessagesHtml(messages = [], currentUser) {
   }
 
   return deduped.map((msg) => {
+    // Strictly compare sender ID with currentUser ID
     const isOwnMessage = Boolean(
       currentUser &&
       currentUser.id != null &&
@@ -244,6 +247,8 @@ export function renderMessagesHtml(messages = [], currentUser) {
 }
 
 let chatPollInterval = null;
+let activeAbortController = null;
+let isPollFetching = false;
 
 export function initTeamDashboardEvents({
   team,
@@ -256,10 +261,7 @@ export function initTeamDashboardEvents({
   apiBaseUrl,
   onUpdateTeamMessages
 }) {
-  if (chatPollInterval) {
-    clearInterval(chatPollInterval);
-    chatPollInterval = null;
-  }
+  cleanupTeamDashboard();
 
   const emptyBtn = document.getElementById('empty-team-action-btn');
   if (emptyBtn) {
@@ -282,6 +284,9 @@ export function initTeamDashboardEvents({
   const chatInput = document.getElementById('team-chat-input');
   const sendBtn = document.getElementById('team-chat-send-btn');
 
+  // Track rendered signature to avoid stale comparisons and redundant DOM updates
+  let renderedSignature = deduplicateMessages(team.messages || []).map(m => `${m.id}:${m.text}`).join('|');
+
   const scrollToBottom = () => {
     if (chatBody) {
       chatBody.scrollTop = chatBody.scrollHeight;
@@ -292,24 +297,40 @@ export function initTeamDashboardEvents({
 
   const fetchLatestMessages = async () => {
     if (!team || !team.id) return;
+    if (isPollFetching) return; // Prevent overlapping requests
+
+    isPollFetching = true;
+    activeAbortController = new AbortController();
+
     try {
-      const res = await fetch(`${apiBaseUrl}/api/teams/${team.id}/messages`);
+      const url = `${apiBaseUrl}/api/teams/${team.id}/messages?userId=${currentUser?.id || ''}&role=${currentRole || ''}`;
+      const res = await fetch(url, {
+        signal: activeAbortController.signal,
+        headers: {
+          'X-User-Id': String(currentUser?.id || ''),
+          'X-User-Role': String(currentRole || '')
+        }
+      });
+
       if (res.ok) {
         const freshMsgs = await res.json();
         if (Array.isArray(freshMsgs)) {
           const deduped = deduplicateMessages(freshMsgs);
-          const currentSig = (team.messages || []).map(m => `${m.id}:${m.text}`).join('|');
           const incomingSig = deduped.map(m => `${m.id}:${m.text}`).join('|');
 
-          if (incomingSig !== currentSig) {
+          // Only update if incoming messages differ from the currently rendered signature
+          if (incomingSig !== renderedSignature) {
+            renderedSignature = incomingSig;
             team.messages = deduped;
+
             if (chatBody) {
-              const isNearBottom = (chatBody.scrollHeight - chatBody.scrollTop - chatBody.clientHeight) < 90;
+              const isNearBottom = (chatBody.scrollHeight - chatBody.scrollTop - chatBody.clientHeight) < 120;
               chatBody.innerHTML = renderMessagesHtml(deduped, currentUser);
-              if (isNearBottom) {
+              if (isNearBottom || renderedSignature === incomingSig) {
                 scrollToBottom();
               }
             }
+
             if (typeof onUpdateTeamMessages === 'function') {
               onUpdateTeamMessages(deduped);
             }
@@ -317,7 +338,13 @@ export function initTeamDashboardEvents({
         }
       }
     } catch (err) {
-      console.warn('Team chat sync poll:', err);
+      if (err.name !== 'AbortError') {
+        // Preserve old messages on fetch errors. Do not clear chatBody or team.messages.
+        console.warn('Team chat sync poll retry:', err);
+      }
+    } finally {
+      isPollFetching = false;
+      activeAbortController = null;
     }
   };
 
@@ -334,6 +361,7 @@ export function initTeamDashboardEvents({
         const sent = await onSendMessage(text);
         if (sent) {
           chatInput.value = '';
+          // Immediate fetch after sending to update without waiting for next tick
           await fetchLatestMessages();
           scrollToBottom();
         }
@@ -345,7 +373,10 @@ export function initTeamDashboardEvents({
     };
   }
 
-  // Live auto-polling strictly every 2 seconds (Requirement: Fetch new messages every 2 seconds)
+  // 1. Fetch immediately when chat opens
+  fetchLatestMessages();
+
+  // 2. Live auto-polling strictly every 2 seconds (Requirement: poll every 2 seconds)
   chatPollInterval = setInterval(fetchLatestMessages, 2000);
 }
 
@@ -354,6 +385,11 @@ export function cleanupTeamDashboard() {
     clearInterval(chatPollInterval);
     chatPollInterval = null;
   }
+  if (activeAbortController) {
+    activeAbortController.abort();
+    activeAbortController = null;
+  }
+  isPollFetching = false;
 }
 
 function escapeHtml(str) {
