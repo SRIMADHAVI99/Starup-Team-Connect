@@ -2,6 +2,7 @@ package com.startupteamconnect.controller;
 
 import com.startupteamconnect.model.Founder;
 import com.startupteamconnect.model.User;
+import com.startupteamconnect.security.AuthTokenService;
 import com.startupteamconnect.service.AuthService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,15 +15,19 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthService authService;
+    private final AuthTokenService authTokenService;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, AuthTokenService authTokenService) {
         this.authService = authService;
+        this.authTokenService = authTokenService;
     }
 
     @PostMapping("/users/register")
     public ResponseEntity<?> registerUser(@RequestBody User user) {
         try {
             User registered = authService.registerUser(user);
+            String token = authTokenService.generateToken(registered.getId(), "user", registered.getEmail());
+            registered.setToken(token);
             return ResponseEntity.ok(registered);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -35,6 +40,8 @@ public class AuthController {
             String email = credentials.get("email");
             String password = credentials.get("password");
             User user = authService.loginUser(email, password);
+            String token = authTokenService.generateToken(user.getId(), "user", user.getEmail());
+            user.setToken(token);
             return ResponseEntity.ok(user);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -45,6 +52,8 @@ public class AuthController {
     public ResponseEntity<?> registerFounder(@RequestBody Founder founder) {
         try {
             Founder registered = authService.registerFounder(founder);
+            String token = authTokenService.generateToken(registered.getId(), "founder", registered.getEmail());
+            registered.setToken(token);
             return ResponseEntity.ok(registered);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -57,6 +66,8 @@ public class AuthController {
             String email = credentials.get("email");
             String password = credentials.get("password");
             Founder founder = authService.loginFounder(email, password);
+            String token = authTokenService.generateToken(founder.getId(), "founder", founder.getEmail());
+            founder.setToken(token);
             return ResponseEntity.ok(founder);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(e.getMessage());

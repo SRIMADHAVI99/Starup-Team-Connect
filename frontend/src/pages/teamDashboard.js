@@ -303,13 +303,15 @@ export function initTeamDashboardEvents({
     activeAbortController = new AbortController();
 
     try {
-      const url = `${apiBaseUrl}/api/teams/${team.id}/messages?userId=${currentUser?.id || ''}&role=${currentRole || ''}`;
+      const url = `${apiBaseUrl}/api/teams/${team.id}/messages`;
+      const token = currentUser?.token || localStorage.getItem('stc_token') || '';
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
       const res = await fetch(url, {
         signal: activeAbortController.signal,
-        headers: {
-          'X-User-Id': String(currentUser?.id || ''),
-          'X-User-Role': String(currentRole || '')
-        }
+        headers
       });
 
       if (res.ok) {

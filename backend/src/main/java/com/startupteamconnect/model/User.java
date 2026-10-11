@@ -37,6 +37,9 @@ public class User {
 
     private String portfolioLink;
 
+    @Transient
+    private String token;
+
     public User() {
     }
 
@@ -127,5 +130,13 @@ public class User {
 
     public void setPortfolioLink(String portfolioLink) {
         this.portfolioLink = portfolioLink;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
     }
 }
