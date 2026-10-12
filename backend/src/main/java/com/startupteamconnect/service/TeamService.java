@@ -10,13 +10,12 @@ import com.startupteamconnect.repository.TeamMemberRepository;
 import com.startupteamconnect.repository.TeamMessageRepository;
 import com.startupteamconnect.repository.TeamRepository;
 import com.startupteamconnect.repository.UserRepository;
+import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class TeamService {
@@ -39,38 +38,78 @@ public class TeamService {
         this.founderRepository = founderRepository;
     }
 
+    /**
+     * Consolidates duplicate teams created for the same startup.
+     * Merges messages and members into the canonical (lowest ID) team.
+     */
+    @PostConstruct
+    @Transactional
+    public void consolidateDuplicateTeams() {
+        try {
+            List<Team> allTeams = teamRepository.findAll();
+            Map<Long, List<Team>> teamsByStartup = allTeams.stream()
+                    .filter(t -> t.getStartupId() != null)
+                    .collect(Collectors.groupingBy(Team::getStartupId));
+
+            for (Map.Entry<Long, List<Team>> entry : teamsByStartup.entrySet()) {
+                List<Team> teams = entry.getValue();
+                if (teams.size() > 1) {
+                    teams.sort(Comparator.comparing(Team::getId));
+                    Team canonical = teams.get(0);
+                    for (int i = 1; i < teams.size(); i++) {
+                        Team duplicate = teams.get(i);
+                        // Repoint all messages to canonical team
+                        List<TeamMessage> messages = teamMessageRepository.findByTeamId(duplicate.getId());
+                        for (TeamMessage msg : messages) {
+                            msg.setTeamId(canonical.getId());
+                            teamMessageRepository.save(msg);
+                        }
+                        // Repoint members
+                        List<TeamMember> members = teamMemberRepository.findByTeamId(duplicate.getId());
+                        for (TeamMember member : members) {
+                            boolean exists = teamMemberRepository.findByTeamId(canonical.getId()).stream()
+                                    .anyMatch(m -> m.getUserId().equals(member.getUserId()));
+                            if (!exists) {
+                                member.setTeam(canonical);
+                                teamMemberRepository.save(member);
+                            } else {
+                                teamMemberRepository.delete(member);
+                            }
+                        }
+                        teamRepository.delete(duplicate);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Keep service alive if migration encountered edge case
+        }
+    }
+
     public Optional<Team> getTeamById(Long teamId) {
         return teamRepository.findById(teamId);
     }
 
     public Optional<Team> getTeamByStartup(Long startupId) {
-        return teamRepository.findByStartupId(startupId);
+        return teamRepository.findFirstByStartupIdOrderByIdAsc(startupId);
     }
 
     public List<Team> getTeamsForFounder(Long founderId) {
-        return teamRepository.findByFounderId(founderId);
+        if (founderId == null) {
+            return Collections.emptyList();
+        }
+        return teamRepository.findByFounderIdOrderByIdAsc(founderId);
     }
 
     public Optional<Team> getTeamForUser(Long userId) {
-        List<TeamMember> memberships = teamMemberRepository.findByUserId(userId);
-        if (!memberships.isEmpty()) {
-            return teamRepository.findById(memberships.get(0).getTeam().getId());
-        }
-        return Optional.empty();
+        List<Team> teams = getTeamsForUser(userId);
+        return teams.isEmpty() ? Optional.empty() : Optional.of(teams.get(0));
     }
 
-    @Transactional(readOnly = true)
     public List<Team> getTeamsForUser(Long userId) {
-        List<TeamMember> memberships = teamMemberRepository.findByUserId(userId);
-        if (memberships.isEmpty()) {
+        if (userId == null) {
             return Collections.emptyList();
         }
-        List<Long> teamIds = memberships.stream()
-                .map(m -> m.getTeam() != null ? m.getTeam().getId() : null)
-                .filter(Objects::nonNull)
-                .distinct()
-                .toList();
-        return teamRepository.findAllById(teamIds);
+        return teamRepository.findTeamsByMemberUserId(userId);
     }
 
     public List<TeamMember> getTeamMembers(Long teamId) {

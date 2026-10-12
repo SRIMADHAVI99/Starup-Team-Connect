@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface TeamMessageRepository extends JpaRepository<TeamMessage, Long> {
     List<TeamMessage> findByTeamIdOrderBySentAtAsc(Long teamId);
+    List<TeamMessage> findByTeamId(Long teamId);
 }

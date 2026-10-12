@@ -38,7 +38,7 @@ export function renderSavedStartupsPage({
           </button>
         </div>
       ` : `
-        <div class="cards-grid">
+        <div id="saved-startups-grid" class="cards-grid">
           ${savedStartups.map(st => renderStartupCard({
             startup: st,
             userSkills,
@@ -61,21 +61,24 @@ export function initSavedStartupsEvents({
   const exploreBtn = document.getElementById('explore-startups-btn');
   if (exploreBtn) exploreBtn.onclick = () => onNavigate('startups');
 
-  document.addEventListener('click', (e) => {
-    const actionBtn = e.target.closest('[data-card-action]');
-    if (!actionBtn) return;
+  const pageContainer = document.querySelector('.saved-startups-page');
+  if (pageContainer) {
+    pageContainer.onclick = (e) => {
+      const actionBtn = e.target.closest('[data-card-action]');
+      if (!actionBtn) return;
 
-    const action = actionBtn.getAttribute('data-card-action');
-    const id = Number(actionBtn.getAttribute('data-id'));
-    const startup = savedStartups.find(s => Number(s.id) === id);
-    if (!startup) return;
+      const action = actionBtn.getAttribute('data-card-action');
+      const id = Number(actionBtn.getAttribute('data-id'));
+      const startup = savedStartups.find(s => Number(s.id) === id || Number(s.startupId) === id);
+      if (!startup) return;
 
-    if (action === 'details') {
-      onViewDetails(startup);
-    } else if (action === 'apply') {
-      onApply(startup);
-    } else if (action === 'save') {
-      onSave(startup);
-    }
-  });
+      if (action === 'details') {
+        onViewDetails(startup);
+      } else if (action === 'apply') {
+        onApply(startup);
+      } else if (action === 'save') {
+        onSave(startup);
+      }
+    };
+  }
 }

@@ -228,6 +228,15 @@ public class SecurityAndOwnershipIntegrationTest {
     }
 
     @Test
+    @DisplayName("Valid team member can access all teams for user")
+    void testValidMemberAccessTeamsForUser() throws Exception {
+        mockMvc.perform(get("/api/teams/user/" + teamMemberUser.getId() + "/all")
+                        .header("Authorization", "Bearer " + memberUserToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].id").value(testTeam.getId()));
+    }
+
+    @Test
     @DisplayName("Valid team member can view team messages and post message")
     void testValidMemberChatOperations() throws Exception {
         // Post message

@@ -1,6 +1,7 @@
 package com.startupteamconnect.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -10,6 +11,7 @@ import java.time.LocalDateTime;
  */
 @Entity
 @Table(name = "team_members")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class TeamMember {
 
     @Id

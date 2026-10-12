@@ -91,7 +91,8 @@ export function renderFounderDashboardPage({
         <div class="cards-grid">
           ${founderStartups.map(st => renderStartupCard({
             startup: st,
-            showApplyButton: false
+            showApplyButton: false,
+            showSaveButton: false
           })).join('')}
         </div>
       `}
@@ -105,7 +106,8 @@ export function initFounderDashboardEvents({
   onNavigate,
   onViewDetails,
   onAcceptApplication,
-  onRejectApplication
+  onRejectApplication,
+  onSave
 }) {
   const createBtn = document.getElementById('founder-create-startup-btn');
   if (createBtn) createBtn.onclick = () => onNavigate('create-startup');
@@ -116,30 +118,37 @@ export function initFounderDashboardEvents({
   const viewAllAppsBtn = document.getElementById('view-all-apps-btn');
   if (viewAllAppsBtn) viewAllAppsBtn.onclick = () => onNavigate('applications');
 
-  // Handle application actions & startup card actions
-  document.addEventListener('click', (e) => {
-    const appBtn = e.target.closest('[data-app-action]');
-    if (appBtn) {
-      const action = appBtn.getAttribute('data-app-action');
-      const appId = Number(appBtn.getAttribute('data-id'));
-      if (action === 'accept') {
-        onAcceptApplication(appId);
-      } else if (action === 'reject') {
-        onRejectApplication(appId);
+  // Handle application actions & startup card actions scoped to page
+  const pageContainer = document.querySelector('.founder-dashboard-page');
+  if (pageContainer) {
+    pageContainer.onclick = (e) => {
+      const appBtn = e.target.closest('[data-app-action]');
+      if (appBtn) {
+        const action = appBtn.getAttribute('data-app-action');
+        const appId = Number(appBtn.getAttribute('data-id'));
+        if (action === 'accept' && onAcceptApplication) {
+          onAcceptApplication(appId);
+        } else if (action === 'reject' && onRejectApplication) {
+          onRejectApplication(appId);
+        }
+        return;
       }
-      return;
-    }
 
-    const cardBtn = e.target.closest('[data-card-action]');
-    if (cardBtn) {
-      const action = cardBtn.getAttribute('data-card-action');
-      const stId = Number(cardBtn.getAttribute('data-id'));
-      const st = founderStartups.find(s => Number(s.id) === stId);
-      if (st && action === 'details') {
-        onViewDetails(st);
+      const cardBtn = e.target.closest('[data-card-action]');
+      if (cardBtn) {
+        const action = cardBtn.getAttribute('data-card-action');
+        const stId = Number(cardBtn.getAttribute('data-id'));
+        const st = founderStartups.find(s => Number(s.id) === stId);
+        if (st) {
+          if (action === 'details' && onViewDetails) {
+            onViewDetails(st);
+          } else if (action === 'save' && onSave) {
+            onSave(st);
+          }
+        }
       }
-    }
-  });
+    };
+  }
 }
 
 function escapeHtml(str) {

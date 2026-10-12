@@ -9,7 +9,8 @@ export function renderStartupCard({
   userSkills = '',
   isSaved = false,
   hasApplied = false,
-  showApplyButton = true
+  showApplyButton = true,
+  showSaveButton = true
 }) {
   const compatibility = userSkills && startup?.requiredSkills 
     ? calculateSkillCompatibility(userSkills, startup.requiredSkills)
@@ -90,14 +91,16 @@ export function renderStartupCard({
           </button>
         ` : ''}
 
-        <button 
-          class="btn-icon-save ${isSaved ? 'saved' : ''}"
-          title="${isSaved ? 'Saved' : 'Save Startup'}"
-          data-card-action="save"
-          data-id="${startup.id}"
-        >
-          ${isSaved ? '♥' : '♡'}
-        </button>
+        ${showSaveButton ? `
+          <button 
+            class="btn-icon-save ${isSaved ? 'saved' : ''}"
+            title="${isSaved ? 'Saved' : 'Save Startup'}"
+            data-card-action="save"
+            data-id="${startup.id}"
+          >
+            ${isSaved ? '♥' : '♡'}
+          </button>
+        ` : ''}
       </div>
     </div>
   `;

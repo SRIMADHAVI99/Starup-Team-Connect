@@ -116,7 +116,18 @@ class AppState {
 
     // Applications & Team
     this.applications = [];
-    this.savedStartups = [];
+    if (this.currentUser?.id) {
+      const savedUserKey = `stc_saved_user_${this.currentUser.id}`;
+      const savedStartupsStr = localStorage.getItem(savedUserKey);
+      try {
+        this.savedStartups = savedStartupsStr ? JSON.parse(savedStartupsStr) : [];
+        if (!Array.isArray(this.savedStartups)) this.savedStartups = [];
+      } catch {
+        this.savedStartups = [];
+      }
+    } else {
+      this.savedStartups = [];
+    }
 
     const savedTeamStr = localStorage.getItem('stc_team');
     try {
@@ -248,6 +259,14 @@ function handleLoginSuccess(userData, role) {
   localStorage.setItem('stc_page', validPage);
   localStorage.setItem('stc_page_user_id', String(userData.id));
 
+  if (!savedUserId || String(savedUserId) !== String(userData.id)) {
+    state.team = null;
+    state.teams = [];
+    state.selectedTeamId = null;
+    localStorage.removeItem('stc_team');
+    localStorage.removeItem('stc_selected_team_id');
+  }
+
   fetchSavedStartups();
   navigateTo(validPage);
 }
@@ -337,7 +356,7 @@ async function fetchSyncData() {
           activeTeam = teamData.find(t => Number(t.id) === Number(state.selectedTeamId));
         }
         if (!activeTeam && teamData.length > 0) {
-          activeTeam = teamData[teamData.length - 1];
+          activeTeam = teamData[0];
           state.selectedTeamId = activeTeam.id;
           localStorage.setItem('stc_selected_team_id', String(activeTeam.id));
         }
@@ -355,14 +374,14 @@ async function fetchSyncData() {
             activeTeam.messages = state.team.messages;
           }
 
-          const teamMembersChanged = !state.team ||
+          const teamChanged = !state.team ||
             Number(state.team.id) !== Number(activeTeam.id) ||
             (state.team.members || []).length !== (activeTeam.members || []).length;
 
           state.team = activeTeam;
           localStorage.setItem('stc_team', JSON.stringify(activeTeam));
 
-          if (teamMembersChanged && (state.currentPage === 'founder-dashboard' || state.currentPage === 'user-dashboard')) {
+          if (teamChanged && (state.currentPage === 'founder-dashboard' || state.currentPage === 'user-dashboard' || state.currentPage === 'team')) {
             renderActivePageOnly();
           }
         } else if (!activeTeam && state.team) {
@@ -394,6 +413,16 @@ async function fetchSavedStartups() {
   }
 
   const userKey = `stc_saved_user_${state.currentUser.id}`;
+  if (!state.savedStartups || state.savedStartups.length === 0) {
+    const localSaved = localStorage.getItem(userKey);
+    if (localSaved) {
+      try {
+        const parsed = JSON.parse(localSaved);
+        if (Array.isArray(parsed)) state.savedStartups = parsed;
+      } catch {}
+    }
+  }
+
   try {
     const res = await fetch(`${API_BASE_URL}/api/saved-startups/user/${state.currentUser.id}`, {
       headers: getAuthHeaders()
@@ -403,17 +432,13 @@ async function fetchSavedStartups() {
       if (Array.isArray(data)) {
         state.savedStartups = data;
         localStorage.setItem(userKey, JSON.stringify(data));
+        if (state.currentPage === 'user-dashboard' || state.currentPage === 'startups' || state.currentPage === 'saved-startups') {
+          renderActivePageOnly();
+        }
         return;
       }
     }
   } catch (e) {}
-
-  const localSaved = localStorage.getItem(userKey);
-  if (localSaved) {
-    try {
-      state.savedStartups = JSON.parse(localSaved);
-    } catch {}
-  }
 }
 
 /**
@@ -468,43 +493,128 @@ async function handleApplyToStartup(startup, selectedRole = 'Developer', note = 
   }
 }
 
+const savingStartupIds = new Set();
 async function handleSaveStartup(startup) {
   if (!state.currentUser?.id || !startup?.id) return;
-  const userKey = `stc_saved_user_${state.currentUser.id}`;
-  const exists = state.savedStartups.some(s => s.id === startup.id);
+  const numStartupId = Number(startup.id);
+  if (savingStartupIds.has(numStartupId)) return;
+  savingStartupIds.add(numStartupId);
 
-  if (exists) {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/saved-startups?userId=${state.currentUser.id}&startupId=${startup.id}`, {
-        method: 'DELETE'
+  const userKey = `stc_saved_user_${state.currentUser.id}`;
+  const exists = state.savedStartups.some(s => Number(s.id) === numStartupId || Number(s.startupId) === numStartupId);
+
+  // Optimistic UI updates across all buttons matching this startup
+  const willBeSaved = !exists;
+  const targetButtons = document.querySelectorAll(`[data-card-action="save"][data-id="${numStartupId}"]`);
+  targetButtons.forEach(btn => {
+    if (willBeSaved) {
+      btn.classList.add('saved');
+      btn.title = 'Saved';
+      btn.innerText = '♥';
+    } else {
+      btn.classList.remove('saved');
+      btn.title = 'Save Startup';
+      btn.innerText = '♡';
+    }
+  });
+
+  const detailsSaveBtn = document.getElementById('details-save-btn');
+  if (detailsSaveBtn && Number(state.selectedStartup?.id) === numStartupId) {
+    if (willBeSaved) {
+      detailsSaveBtn.classList.add('saved');
+      detailsSaveBtn.title = 'Saved';
+      detailsSaveBtn.innerText = '♥ Saved';
+    } else {
+      detailsSaveBtn.classList.remove('saved');
+      detailsSaveBtn.title = 'Save this startup';
+      detailsSaveBtn.innerText = '♡ Save';
+    }
+  }
+
+  try {
+    if (exists) {
+      const res = await fetch(`${API_BASE_URL}/api/saved-startups?userId=${state.currentUser.id}&startupId=${numStartupId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders()
       });
       if (res.ok) {
-        state.savedStartups = state.savedStartups.filter(s => s.id !== startup.id);
+        state.savedStartups = state.savedStartups.filter(s => Number(s.id) !== numStartupId && Number(s.startupId) !== numStartupId);
         localStorage.setItem(userKey, JSON.stringify(state.savedStartups));
-        renderActivePageOnly();
+        if (state.currentPage === 'saved-startups') {
+          renderActivePageOnly();
+        } else {
+          updateSavedCountInDashboard();
+        }
       } else {
-        showModal('Error', 'Unable to remove startup from bookmarks.', 'error');
+        revertButtons();
+        let errMsg = 'Unable to remove startup from bookmarks.';
+        try {
+          const errText = await res.text();
+          if (errText) errMsg = errText;
+        } catch {}
+        showModal('Error', errMsg, 'error');
       }
-    } catch (e) {
-      showModal('Error', 'Unable to connect to the server.', 'error');
-    }
-  } else {
-    try {
+    } else {
       const res = await fetch(`${API_BASE_URL}/api/saved-startups`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: state.currentUser.id, startupId: startup.id })
+        headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ userId: state.currentUser.id, startupId: numStartupId })
       });
       if (res.ok) {
-        state.savedStartups = [...state.savedStartups, startup];
+        state.savedStartups = [...state.savedStartups.filter(s => Number(s.id) !== numStartupId && Number(s.startupId) !== numStartupId), startup];
         localStorage.setItem(userKey, JSON.stringify(state.savedStartups));
-        renderActivePageOnly();
+        if (state.currentPage === 'saved-startups') {
+          renderActivePageOnly();
+        } else {
+          updateSavedCountInDashboard();
+        }
       } else {
-        showModal('Error', 'Unable to save startup opportunity.', 'error');
+        revertButtons();
+        let errMsg = 'Unable to save startup opportunity.';
+        try {
+          const errText = await res.text();
+          if (errText) errMsg = errText;
+        } catch {}
+        showModal('Error', errMsg, 'error');
       }
-    } catch (e) {
-      showModal('Error', 'Unable to connect to the server.', 'error');
     }
+  } catch (e) {
+    revertButtons();
+    showModal('Error', 'Unable to connect to the server.', 'error');
+  } finally {
+    savingStartupIds.delete(numStartupId);
+  }
+
+  function revertButtons() {
+    targetButtons.forEach(btn => {
+      if (exists) {
+        btn.classList.add('saved');
+        btn.title = 'Saved';
+        btn.innerText = '♥';
+      } else {
+        btn.classList.remove('saved');
+        btn.title = 'Save Startup';
+        btn.innerText = '♡';
+      }
+    });
+    if (detailsSaveBtn && Number(state.selectedStartup?.id) === numStartupId) {
+      if (exists) {
+        detailsSaveBtn.classList.add('saved');
+        detailsSaveBtn.title = 'Saved';
+        detailsSaveBtn.innerText = '♥ Saved';
+      } else {
+        detailsSaveBtn.classList.remove('saved');
+        detailsSaveBtn.title = 'Save this startup';
+        detailsSaveBtn.innerText = '♡ Save';
+      }
+    }
+  }
+}
+
+function updateSavedCountInDashboard() {
+  const statValues = document.querySelectorAll('.user-dashboard-page .stat-card .stat-value');
+  if (statValues && statValues[2]) {
+    statValues[2].innerText = String(state.savedStartups.length);
   }
 }
 
@@ -838,7 +948,8 @@ function renderActivePageContent() {
         onNavigate: (p) => navigateTo(p),
         onViewDetails: handleViewStartupDetails,
         onAcceptApplication: handleAcceptApplication,
-        onRejectApplication: handleRejectApplication
+        onRejectApplication: handleRejectApplication,
+        onSave: handleSaveStartup
       });
       break;
 
@@ -858,8 +969,8 @@ function renderActivePageContent() {
         startup: state.selectedStartup,
         currentUser: state.currentUser,
         currentRole: state.currentRole,
-        isSaved: state.savedStartups.some(s => s.id === state.selectedStartup?.id),
-        hasApplied: userApplications.some(a => a.startupId === state.selectedStartup?.id)
+        isSaved: state.savedStartups.some(s => Number(s.id) === Number(state.selectedStartup?.id) || Number(s.startupId) === Number(state.selectedStartup?.id)),
+        hasApplied: userApplications.some(a => Number(a.startupId) === Number(state.selectedStartup?.id) || Number(a.startup?.id) === Number(state.selectedStartup?.id))
       });
       initStartupDetailsEvents({
         startup: state.selectedStartup,

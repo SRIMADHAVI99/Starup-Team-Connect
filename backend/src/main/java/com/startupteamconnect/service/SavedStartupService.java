@@ -34,8 +34,13 @@ public class SavedStartupService {
         if (savedStartupRepository.findByUserIdAndStartupId(userId, startupId).isPresent()) {
             return savedStartupRepository.findByUserIdAndStartupId(userId, startupId).get();
         }
-        SavedStartup saved = new SavedStartup(userId, startupId);
-        return savedStartupRepository.save(saved);
+        try {
+            SavedStartup saved = new SavedStartup(userId, startupId);
+            return savedStartupRepository.save(saved);
+        } catch (Exception e) {
+            return savedStartupRepository.findByUserIdAndStartupId(userId, startupId)
+                    .orElseThrow(() -> new RuntimeException("Unable to save startup opportunity: " + e.getMessage()));
+        }
     }
 
     @Transactional

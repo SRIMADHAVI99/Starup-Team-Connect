@@ -30,11 +30,11 @@ export function renderUserDashboardPage({
     .slice(0, 3);
 
   const hasUserApplied = (startupId) => {
-    return applications.some(app => app.startup?.id === startupId || app.startupId === startupId);
+    return applications.some(app => Number(app.startup?.id) === Number(startupId) || Number(app.startupId) === Number(startupId));
   };
 
   const isStartupSaved = (startupId) => {
-    return savedStartups.some(s => s.id === startupId || s.startupId === startupId);
+    return savedStartups.some(s => Number(s.id) === Number(startupId) || Number(s.startupId) === Number(startupId));
   };
 
   return `
@@ -136,11 +136,11 @@ export function renderUserDashboardPage({
 
 function renderAllStartupsGrid(startups, userSkills, applications, savedStartups, startupsError, filterTerm = '', filterCategory = 'ALL') {
   const hasUserApplied = (startupId) => {
-    return applications.some(app => app.startup?.id === startupId || app.startupId === startupId);
+    return applications.some(app => Number(app.startup?.id) === Number(startupId) || Number(app.startupId) === Number(startupId));
   };
 
   const isStartupSaved = (startupId) => {
-    return savedStartups.some(s => s.id === startupId || s.startupId === startupId);
+    return savedStartups.some(s => Number(s.id) === Number(startupId) || Number(s.startupId) === Number(startupId));
   };
 
   const term = (filterTerm || '').toLowerCase().trim();
@@ -213,24 +213,27 @@ export function initUserDashboardEvents({
   if (searchInput) searchInput.oninput = handleFilterChange;
   if (catSelect) catSelect.onchange = handleFilterChange;
 
-  // Delegate actions on all startup cards in page
-  document.addEventListener('click', (e) => {
-    const actionBtn = e.target.closest('[data-card-action]');
-    if (!actionBtn) return;
+  // Delegate actions on all startup cards in the dashboard page (Recommended + All Startups)
+  const pageContainer = document.querySelector('.user-dashboard-page');
+  if (pageContainer) {
+    pageContainer.onclick = (e) => {
+      const actionBtn = e.target.closest('[data-card-action]');
+      if (!actionBtn) return;
 
-    const action = actionBtn.getAttribute('data-card-action');
-    const id = Number(actionBtn.getAttribute('data-id'));
-    const startup = startups.find(s => Number(s.id) === id);
-    if (!startup) return;
+      const action = actionBtn.getAttribute('data-card-action');
+      const id = Number(actionBtn.getAttribute('data-id'));
+      const startup = startups.find(s => Number(s.id) === id) || savedStartups.find(s => Number(s.id) === id || Number(s.startupId) === id);
+      if (!startup) return;
 
-    if (action === 'details') {
-      onViewDetails(startup);
-    } else if (action === 'apply') {
-      onApply(startup);
-    } else if (action === 'save') {
-      onSave(startup);
-    }
-  });
+      if (action === 'details') {
+        onViewDetails(startup);
+      } else if (action === 'apply') {
+        onApply(startup);
+      } else if (action === 'save') {
+        onSave(startup);
+      }
+    };
+  }
 }
 
 function escapeHtml(str) {
